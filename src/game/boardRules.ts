@@ -1,16 +1,11 @@
-import { getPresetFoodCards, getRandomFoodCards } from "../utils/cardRandomizer";
 import type { ConditionJudgement, Food, NutritionTotals } from "../types";
-import {
-  BOARD_SPACES,
-  GOAL_POSITION,
-  LEARNED_CARD_COUNT,
-  boardDemoFoodCodes,
-  studyNutrients,
-} from "../data/missions";
+import { TRACK_SPACES, level2Missions, level3Missions, studyNutrients, takeMissionIds } from "../data/missions";
+import { createPlayerFoodSets } from "../utils/foodSets";
 
 export type StageId = "level1" | "level2" | "level3";
 export type PlayPhase =
   | "board"
+  | "preview"
   | "study"
   | "answer"
   | "roundResult"
@@ -32,6 +27,8 @@ export interface Player {
   color: string;
   position: number;
   totalScore: number;
+  foodSetId: string;
+  foodSet: Food[];
 }
 
 export interface RoundNote {
@@ -56,7 +53,6 @@ export interface BoardSession {
   studyToken: number;
   playerCount: number;
   demoCards: boolean;
-  foods: Food[];
   players: Player[];
   stage: StageId;
   round: number;
@@ -64,12 +60,15 @@ export interface BoardSession {
   currentPlayerIndex: number;
   pendingPoints: number;
   roundLog: RoundNote[];
+  stageMissionIds: string[];
+  usedMissionIds: string[];
   feedback: TurnFeedback | null;
   winnerId: number | null;
 }
 
 const phases: PlayPhase[] = [
   "board",
+  "preview",
   "study",
   "answer",
   "roundResult",
@@ -78,38 +77,37 @@ const phases: PlayPhase[] = [
   "done",
 ];
 
-export function createPlayers(count: number): Player[] {
-  return Array.from({ length: count }, (_, index) => {
+export function createPlayers(count: number, stable = false): Player[] {
+  return createPlayerFoodSets(count, stable).map((set, index) => {
     const role = PLAYER_ROLES[index] ?? PLAYER_ROLES[0];
     return {
-      id: index + 1,
-      name: `PLAYER ${index + 1}`,
+      id: set.playerId,
+      name: `PLAYER ${set.playerId}`,
       role: role.role,
       color: role.color,
       position: 0,
       totalScore: 0,
+      foodSetId: set.setId,
+      foodSet: set.foods,
     };
   });
 }
 
 export function createSession(playerCount: number, demoCards: boolean): BoardSession {
-  const foods = demoCards
-    ? getPresetFoodCards(boardDemoFoodCodes)
-    : getRandomFoodCards(LEARNED_CARD_COUNT);
-
   return {
     startedAt: Date.now(),
     studyToken: 0,
     playerCount,
     demoCards,
-    foods,
-    players: createPlayers(playerCount),
+    players: createPlayers(playerCount, demoCards),
     stage: "level1",
     round: 1,
     phase: "board",
     currentPlayerIndex: 0,
     pendingPoints: 0,
     roundLog: [],
+    stageMissionIds: studyNutrients.map((nutrient) => nutrient.id),
+    usedMissionIds: [],
     feedback: null,
     winnerId: null,
   };
@@ -122,7 +120,15 @@ export function openTurn(session: BoardSession): BoardSession {
     pendingPoints: 0,
     roundLog: [],
     feedback: null,
-    phase: session.stage === "level1" ? "study" : "answer",
+    phase: session.stage === "level1" ? "preview" : "answer",
+    studyToken: 0,
+  };
+}
+
+export function beginStudy(session: BoardSession): BoardSession {
+  return {
+    ...session,
+    phase: "study",
     studyToken: Date.now(),
   };
 }
@@ -148,8 +154,12 @@ export function recordRound(
 }
 
 export function confirmRound(session: BoardSession): BoardSession {
-  const moreLevel1 = session.stage === "level1" && session.round < studyNutrients.length;
-  if (moreLevel1) {
+  const current = session.players[session.currentPlayerIndex];
+  const projected = (current?.position ?? 0) + session.pendingPoints;
+  if (projected >= TRACK_SPACES) return beginMove(session);
+
+  const roundCount = Math.max(session.stageMissionIds.length, 1);
+  if (session.round < roundCount) {
     return {
       ...session,
       round: session.round + 1,
@@ -168,9 +178,9 @@ export function beginMove(session: BoardSession): BoardSession {
   if (!current) return session;
 
   const points = session.pendingPoints;
-  const steps = Math.max(0, Math.min(points, GOAL_POSITION - current.position));
-  const position = current.position + steps;
-  const reachedGoal = position >= GOAL_POSITION;
+  const steps = Math.max(0, Math.min(points, TRACK_SPACES - current.position));
+  const position = Math.min(current.position + steps, TRACK_SPACES);
+  const reachedGoal = position >= TRACK_SPACES;
   const players = session.players.map((player, index) =>
     index === session.currentPlayerIndex
       ? { ...player, position, totalScore: player.totalScore + points }
@@ -187,7 +197,7 @@ export function beginMove(session: BoardSession): BoardSession {
       points,
       steps,
       reachedGoal,
-      headline: stageDoneTitle(session.stage),
+      headline: reachedGoal ? `${current.name}가 GOAL에 도착했습니다!` : `${current.name} +${steps}칸 이동!`,
       detail: moveSentence(steps, reachedGoal),
       answerNames: [],
       conditions: session.feedback?.conditions ?? [],
@@ -215,69 +225,35 @@ export function finishMove(session: BoardSession): BoardSession {
   }
 
   if (session.stage === "level1") {
-    return {
-      ...session,
-      stage: "level2",
-      round: 1,
-      currentPlayerIndex: 0,
-      phase: "board",
-      feedback: null,
-      pendingPoints: 0,
-      roundLog: [],
-    };
+    return openStage(session, "level2", level2Missions, 4);
   }
 
   if (session.stage === "level2") {
-    return {
-      ...session,
-      stage: "level3",
-      round: 1,
-      currentPlayerIndex: 0,
-      phase: "board",
-      feedback: null,
-      pendingPoints: 0,
-      roundLog: [],
-    };
+    return openStage(session, "level3", level3Missions, 3);
   }
 
-  const leader = [...session.players].sort(
-    (left, right) => right.position - left.position || left.id - right.id,
-  )[0];
+  return openStage(session, "level2", level2Missions, 4);
+}
 
+function openStage(
+  session: BoardSession,
+  stage: StageId,
+  pool: ReadonlyArray<{ id: string }>,
+  count: number,
+): BoardSession {
+  const deal = takeMissionIds(pool, session.usedMissionIds, count);
   return {
     ...session,
-    phase: "done",
+    stage,
+    round: 1,
+    currentPlayerIndex: 0,
+    phase: "board",
     feedback: null,
-    winnerId: leader?.id ?? null,
+    pendingPoints: 0,
+    roundLog: [],
+    stageMissionIds: deal.ids,
+    usedMissionIds: deal.used,
   };
-}
-
-export function spaceZone(index: number): "start" | "level1" | "level2" | "level3" | "goal" {
-  if (index <= 0) return "start";
-  if (index >= GOAL_POSITION) return "goal";
-  if (index <= 3) return "level1";
-  if (index <= 5) return "level2";
-  return "level3";
-}
-
-export function spacePoint(index: number): { x: number; y: number } {
-  const angle = -Math.PI / 2 + (index / BOARD_SPACES) * Math.PI * 2;
-  const radius = 36;
-  return {
-    x: 50 + radius * Math.cos(angle),
-    y: 50 + radius * Math.sin(angle),
-  };
-}
-
-export function arcPath(from: number, to: number, radius = 36): string {
-  const start = -Math.PI / 2 + ((from - 0.42) / BOARD_SPACES) * Math.PI * 2;
-  const end = -Math.PI / 2 + ((to + 0.42) / BOARD_SPACES) * Math.PI * 2;
-  const x1 = 50 + radius * Math.cos(start);
-  const y1 = 50 + radius * Math.sin(start);
-  const x2 = 50 + radius * Math.cos(end);
-  const y2 = 50 + radius * Math.sin(end);
-  const large = end - start > Math.PI ? 1 : 0;
-  return `M ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2}`;
 }
 
 export function moveSentence(steps: number, reachedGoal: boolean): string {
@@ -294,27 +270,20 @@ export function stageTitle(stage: StageId): string {
   return "영양조건 맞추기";
 }
 
-export function stageZoneLabel(stage: StageId): string {
-  if (stage === "level1") return "영양소 기억";
-  if (stage === "level2") return "한 끼 구성";
-  return "영양조건";
-}
-
-function stageDoneTitle(stage: StageId): string {
-  if (stage === "level1") return "LEVEL 1 완료";
-  if (stage === "level2") return "LEVEL 2 완료";
-  return "LEVEL 3 완료";
-}
-
 export function isBoardSession(value: unknown): value is BoardSession {
   if (!value || typeof value !== "object") return false;
   const session = value as BoardSession;
   return (
     Array.isArray(session.players) &&
-    Array.isArray(session.foods) &&
-    session.foods.length > 0 &&
+    session.players.length > 0 &&
+    session.players.every(
+      (player) => Array.isArray(player.foodSet) && player.foodSet.length === 9 && player.foodSetId,
+    ) &&
     Array.isArray(session.roundLog) &&
     typeof session.pendingPoints === "number" &&
+    Array.isArray(session.stageMissionIds) &&
+    session.stageMissionIds.length > 0 &&
+    Array.isArray(session.usedMissionIds) &&
     phases.includes(session.phase) &&
     (session.stage === "level1" || session.stage === "level2" || session.stage === "level3")
   );

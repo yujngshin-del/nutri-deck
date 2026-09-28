@@ -11,7 +11,13 @@ export function loadMatches(): MatchRecord[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isMatchRecord);
+    return parsed.filter(isMatchRecord).map((record) => ({
+      ...record,
+      players: record.players.map((player, index) => ({
+        ...player,
+        id: typeof player.id === "number" ? player.id : index + 1,
+      })),
+    }));
   } catch {
     return [];
   }

@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { SimplePage } from "../components/SimplePage";
 
 const steps = [
-  { label: "국가표준식품성분 DB", state: "확장 예정" },
-  { label: "메뉴젠 음식·조리 정보", state: "확장 예정" },
-  { label: "게임용 음식 카드", state: "목업 동작" },
+  { label: "국가표준식품성분 DB", state: "9개 메뉴 합산" },
+  { label: "메뉴젠 음식·조리 정보", state: "메뉴·재료 중량" },
+  { label: "게임용 음식 카드", state: "후보 36종 · 플레이어당 9장" },
   { label: "LEVEL 1에서 영양정보 학습", state: "동작" },
   { label: "같은 카드로 메뉴 선택", state: "동작" },
   { label: "food_code로 영양정보 조회", state: "동작" },
@@ -33,8 +33,9 @@ export function About() {
         ))}
       </ol>
       <p className="mt-6 text-sm leading-6 text-neutral-500">
-        카드에 적힌 영양 수치는 공공데이터를 연결하기 전의 예시입니다. 음식 카드는 비빔밥, 김치찌개,
-        불고기처럼 이미 완성된 메뉴입니다.
+        후보 메뉴 36장의 영양값은 메뉴젠 재료 중량에 국가표준식품성분 Database 10.4의 가식부
+        100g당 성분을 곱해 메뉴 전체로 합산한 값입니다. 게임에서는 플레이어마다 서로 다른 9장을
+        받습니다. 실시간 API로 불러오는 전체 메뉴는 아닙니다.
       </p>
       <Link to="/" className="mt-6 inline-block text-sm font-bold text-brand">
         홈으로 돌아가 게임 시작

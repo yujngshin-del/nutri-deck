@@ -86,6 +86,30 @@ export function bestFoods(dealt: Food[], mission: Level1Mission): Food[] {
 }
 
 function evaluateLevel2(totals: NutritionTotals, mission: Level2Mission): MissionJudgement {
+  if (mission.kind === "threshold") {
+    const actual = totals[mission.nutrient];
+    const met = mission.op === "gte" ? actual >= mission.value : actual <= mission.value;
+    const targetText =
+      mission.op === "gte"
+        ? `${mission.value.toLocaleString("ko-KR")}${mission.unit} 이상`
+        : `${mission.value.toLocaleString("ko-KR")}${mission.unit} 이하`;
+    return {
+      points: met ? 2 : 0,
+      maxPoints: 2,
+      headline: met ? "성공!" : "조건을 맞추지 못했습니다.",
+      detail: `현재 ${mission.label}은 ${formatNutrient(mission.nutrient, actual)}입니다.`,
+      conditions: [
+        {
+          id: mission.id,
+          label: mission.label,
+          targetText,
+          actualText: formatNutrient(mission.nutrient, actual),
+          met,
+        },
+      ],
+    };
+  }
+
   const gap = totals.energy_kcal - mission.targetKcal;
   const distance = Math.abs(gap);
   const success = distance <= mission.successGap;
@@ -93,14 +117,21 @@ function evaluateLevel2(totals: NutritionTotals, mission: Level2Mission): Missio
   return {
     points: success ? 2 : 0,
     maxPoints: 2,
-    headline: success ? "정답!" : "목표와 차이가 있습니다.",
-    detail: `목표는 ${mission.targetKcal}kcal, 내 식단은 ${totals.energy_kcal}kcal, 차이는 ${distance}kcal입니다.`,
+    headline: success ? "성공!" : "목표와 차이가 있습니다.",
+    detail: `목표는 ${mission.targetKcal}kcal, 현재 식사는 ${totals.energy_kcal}kcal, 차이는 ${distance}kcal입니다.`,
     conditions: [
       {
         id: "target-kcal",
-        label: "목표 열량",
-        targetText: `${mission.targetKcal}kcal · 차이 ${mission.successGap}kcal 이내`,
-        actualText: `${totals.energy_kcal}kcal (차이 ${gap > 0 ? "+" : ""}${gap}kcal)`,
+        label: "목표",
+        targetText: `${mission.targetKcal}kcal`,
+        actualText: `${totals.energy_kcal}kcal`,
+        met: success,
+      },
+      {
+        id: "kcal-gap",
+        label: "차이",
+        targetText: `${mission.successGap}kcal 이내`,
+        actualText: `${distance}kcal`,
         met: success,
       },
     ],
@@ -117,7 +148,7 @@ function evaluateLevel3(totals: NutritionTotals, mission: Level3Mission): Missio
     points: metCount,
     maxPoints: mission.conditions.length,
     headline: `${mission.conditions.length}개 조건 중 ${metCount}개 충족`,
-    detail: "조건마다 1점입니다. 이 점수는 건강도가 아니라 게임 미션 달성 점수입니다.",
+    detail: "조건마다 1점입니다.",
     conditions,
   };
 }

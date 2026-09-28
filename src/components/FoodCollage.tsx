@@ -23,10 +23,10 @@ export function FoodCollage({ variant }: { variant: "frame" | "fill" }) {
           />
         ))}
         <span className="absolute left-[8%] top-[30%] hidden rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-neutral-500 shadow lg:block">
-          520 kcal
+          890 kcal
         </span>
         <span className="absolute right-[12%] top-[28%] hidden rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-neutral-500 shadow lg:block">
-          80 kcal
+          294 kcal
         </span>
       </div>
     );

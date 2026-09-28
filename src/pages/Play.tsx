@@ -1,29 +1,32 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { calculateNutritionByCodes, fetchFoodByCode, postEvaluateMission } from "../api/nutritionApi";
-import { BoardTrack } from "../components/BoardTrack";
+import { Board } from "../components/board/Board";
+import { TableDecor } from "../components/board/TableDecor";
+import { PlayerCard } from "../components/PlayerCard";
 import { Footer } from "../components/Footer";
 import { GameModal } from "../components/GameModal";
 import { Header } from "../components/Header";
 import { PlayerRail } from "../components/PlayerRail";
 import { useGame } from "../context/GameContext";
 import {
-  GOAL_POSITION,
+  MEAL_MIN_SIZE,
   STUDY_SECONDS,
-  buildLevel3Mission,
-  level2Mission,
+  TRACK_SPACES,
+  level2MissionById,
+  level3MissionById,
   missionForRound,
   studyNutrients,
 } from "../data/missions";
 import {
   beginMove,
+  beginStudy,
   confirmRound,
   createSession,
   finishMove,
   openTurn,
   recordRound,
   stageTitle,
-  stageZoneLabel,
   type BoardSession,
 } from "../game/boardRules";
 import { useCountdown } from "../hooks/useCountdown";
@@ -36,7 +39,7 @@ interface StartRequest {
   fresh?: boolean;
 }
 
-const modalPhases = new Set(["study", "answer", "roundResult", "sessionResult"]);
+const modalPhases = new Set(["preview", "study", "answer", "roundResult", "sessionResult"]);
 
 export function Play() {
   const location = useLocation();
@@ -76,7 +79,12 @@ export function Play() {
   }, [session, timeLeft]);
 
   useEffect(() => {
-    if (session?.phase === "answer" || session?.phase === "study" || session?.phase === "board") {
+    if (
+      session?.phase === "answer" ||
+      session?.phase === "study" ||
+      session?.phase === "preview" ||
+      session?.phase === "board"
+    ) {
       setSelected([]);
     }
   }, [session?.phase, session?.currentPlayerIndex, session?.round, session?.stage]);
@@ -124,12 +132,13 @@ export function Play() {
       id: String(session.startedAt),
       playedAt: new Date().toISOString(),
       winnerName: winner.name,
-      reachedGoal: winner.position >= GOAL_POSITION,
+      reachedGoal: winner.position >= TRACK_SPACES,
       players: session.players.map((player) => ({
+        id: player.id,
         name: player.name,
         position: player.position,
         totalScore: player.totalScore,
-        reachedGoal: player.position >= GOAL_POSITION,
+        reachedGoal: player.position >= TRACK_SPACES,
       })),
     });
   }, [session, recordMatch]);
@@ -152,6 +161,8 @@ export function Play() {
 
   async function submit() {
     if (!session || session.phase !== "answer" || selected.length === 0 || busy) return;
+    if (session.stage !== "level1" && selected.length < MEAL_MIN_SIZE) return;
+    const dealt = session.players[session.currentPlayerIndex]?.foodSet ?? [];
     setBusy(true);
     try {
       if (session.stage === "level1") {
@@ -160,10 +171,10 @@ export function Play() {
         const judgement = await postEvaluateMission({
           kind: "level1",
           selected: food,
-          dealt: session.foods,
+          dealt,
           mission,
         });
-        const answerNames = bestFoods(session.foods, mission).map((item) => item.food_name);
+        const answerNames = bestFoods(dealt, mission).map((item) => item.food_name);
         setSession((currentSession) =>
           currentSession
             ? recordRound(
@@ -184,11 +195,13 @@ export function Play() {
       }
 
       const calculated = await calculateNutritionByCodes(selected);
+      const missionId = session.stageMissionIds[session.round - 1] ?? "";
       if (session.stage === "level2") {
+        const mission = level2MissionById(missionId);
         const judgement = await postEvaluateMission({
           kind: "level2",
           totals: calculated.totals,
-          mission: level2Mission,
+          mission,
         });
         setSession((currentSession) =>
           currentSession
@@ -202,14 +215,14 @@ export function Play() {
                   conditions: judgement.conditions,
                   totals: calculated.totals,
                 },
-                "한 끼",
+                mission.label,
               )
             : currentSession,
         );
         return;
       }
 
-      const mission = buildLevel3Mission();
+      const mission = level3MissionById(missionId);
       const judgement = await postEvaluateMission({
         kind: "level3",
         totals: calculated.totals,
@@ -227,7 +240,7 @@ export function Play() {
                 conditions: judgement.conditions,
                 totals: calculated.totals,
               },
-              "영양조건",
+              mission.conditions.map((condition) => condition.label).join(" · "),
             )
           : currentSession,
       );
@@ -239,6 +252,7 @@ export function Play() {
   function confirm() {
     setSession((currentSession) => {
       if (!currentSession) return currentSession;
+      if (currentSession.phase === "preview") return beginStudy(currentSession);
       if (currentSession.phase === "roundResult") return confirmRound(currentSession);
       if (currentSession.phase === "sessionResult") return beginMove(currentSession);
       return currentSession;
@@ -252,38 +266,52 @@ export function Play() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#eef6f0]">
+    <div className="play-table relative flex min-h-svh flex-col">
+      <TableDecor />
       <Header />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-black tracking-wide text-brand">
-            {session.stage === "level1" ? "LEVEL 1" : session.stage === "level2" ? "LEVEL 2" : "LEVEL 3"}
-            <span className="ml-2 text-neutral-700">{stageZoneLabel(session.stage)}</span>
-          </p>
-          <PlayerRail
-            players={session.players.map((player) => ({
-              ...player,
-              position: displayPositions[player.id] ?? player.position,
-            }))}
+      <main className="relative z-[1] mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-3 py-2">
+        <PlayerRail
+          players={session.players.map((player) => ({
+            ...player,
+            position: displayPositions[player.id] ?? player.position,
+          }))}
+          currentPlayerId={session.phase === "done" ? null : current?.id ?? null}
+        />
+
+        <div className="flex flex-1 items-center justify-center gap-3 py-2">
+          <PlayerColumn
+            players={session.players.filter((_, index) => index % 2 === 0)}
+            displayPositions={displayPositions}
+            currentPlayerId={session.phase === "done" ? null : current?.id ?? null}
+          />
+          <Board
+            players={session.players}
+            displayPositions={displayPositions}
+            currentPlayerId={modalOpen || session.phase === "done" ? null : current?.id ?? null}
+            moveLabel={
+              session.phase === "moving" && session.feedback
+                ? `+${session.feedback.steps}칸`
+                : null
+            }
+          />
+          <PlayerColumn
+            players={session.players.filter((_, index) => index % 2 === 1)}
+            displayPositions={displayPositions}
             currentPlayerId={session.phase === "done" ? null : current?.id ?? null}
           />
         </div>
 
-        <BoardTrack
-          players={session.players}
-          displayPositions={displayPositions}
-          currentPlayerId={modalOpen || session.phase === "done" ? null : current?.id ?? null}
-        />
-
-        <div className="mx-auto mt-6 w-full max-w-xl text-center">
+        <div className="mx-auto flex min-h-[96px] w-full max-w-xl flex-col items-center justify-center text-center">
           {session.phase === "board" && current && (
             <>
-              <p className="text-2xl font-black sm:text-3xl">{current.name}의 차례입니다</p>
-              <p className="mt-1 text-sm text-neutral-600">{stageTitle(session.stage)}</p>
+              <div className="turn-plaque px-8 py-3 sm:px-14">
+                <p className="text-xl font-black sm:text-2xl">{current.name}의 차례입니다</p>
+                <p className="mt-0.5 text-sm font-semibold text-[#f4e7cf]/80">{stageTitle(session.stage)}</p>
+              </div>
               <button
                 type="button"
                 onClick={() => setSession((currentSession) => (currentSession ? openTurn(currentSession) : currentSession))}
-                className="mt-4 rounded-full bg-gradient-to-b from-[#43d58f] to-[#2fbe78] px-10 py-3 text-base font-extrabold text-white shadow-[0_10px_24px_rgba(47,190,120,0.35)]"
+                className="mt-3 rounded-full border border-[#e7d3b0] bg-[#fffaf3] px-10 py-2.5 text-base font-extrabold text-[#3f342c] shadow-[0_4px_0_#e4d2b0]"
               >
                 게임 시작
               </button>
@@ -329,7 +357,7 @@ function WinnerPanel({
   onHome: () => void;
 }) {
   const winner = session.players.find((player) => player.id === session.winnerId) ?? session.players[0];
-  const reached = (winner?.position ?? 0) >= GOAL_POSITION;
+  const reached = (winner?.position ?? 0) >= TRACK_SPACES;
   const ranked = [...session.players].sort(
     (left, right) => right.position - left.position || left.id - right.id,
   );
@@ -337,19 +365,21 @@ function WinnerPanel({
   return (
     <section className="rounded-[32px] bg-white px-6 py-8 shadow-sm">
       <p className="text-sm font-black tracking-wide text-brand">GAME OVER</p>
-      <h2 className="mt-2 text-4xl font-black">{winner?.name} 우승</h2>
+      <h2 className="mt-2 text-4xl font-black">🏆 {winner?.name} 승리!</h2>
       <p className="mt-2 text-neutral-600">
-        {reached ? "가장 먼저 GOAL에 도착했습니다." : "모든 차례가 끝났습니다. 가장 멀리 이동한 플레이어입니다."}
+        {reached ? "가장 먼저 GOAL에 도착했습니다." : "가장 멀리 이동한 플레이어입니다."}
       </p>
+      <p className="mt-2 text-sm font-bold text-neutral-700">현재 점수 {winner?.totalScore ?? 0}점</p>
       <ol className="mx-auto mt-5 max-w-sm space-y-2 text-left">
-        {ranked.map((player) => (
+        {ranked.map((player, index) => (
           <li key={player.id} className="flex items-center justify-between rounded-2xl bg-neutral-50 px-4 py-3">
             <span className="font-extrabold">
+              <span className="mr-2 text-brand">{index + 1}위</span>
               {player.name}
               <span className="ml-1 text-xs font-semibold text-neutral-400">{player.role}</span>
             </span>
             <span className="font-bold">
-              {player.position >= GOAL_POSITION ? "GOAL" : `${player.position}칸`}
+              {player.position >= TRACK_SPACES ? "GOAL" : `${player.position} / ${TRACK_SPACES}칸`}
               {player.id === winner?.id ? " 🏆" : ""}
             </span>
           </li>
@@ -372,6 +402,29 @@ function WinnerPanel({
         </button>
       </div>
     </section>
+  );
+}
+
+function PlayerColumn({
+  players,
+  displayPositions,
+  currentPlayerId,
+}: {
+  players: BoardSession["players"];
+  displayPositions: Record<number, number>;
+  currentPlayerId: number | null;
+}) {
+  if (players.length === 0) return <div className="hidden w-[132px] shrink-0 xl:block" />;
+  return (
+    <div className="hidden shrink-0 flex-col gap-3 xl:flex">
+      {players.map((player) => (
+        <PlayerCard
+          key={player.id}
+          player={{ ...player, position: displayPositions[player.id] ?? player.position }}
+          active={player.id === currentPlayerId}
+        />
+      ))}
+    </div>
   );
 }
 

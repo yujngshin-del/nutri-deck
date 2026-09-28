@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FoodCollage } from "../components/FoodCollage";
+import { HomeBackdrop } from "../components/HomeBackdrop";
+import { LevelGuide } from "../components/LevelGuide";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { cx } from "../utils/format";
-
-const steps = [
-  { title: "LEVEL 1", text: "영양정보를 10초간 보고, 숨긴 뒤 영양소를 비교합니다. 맞히면 1점." },
-  { title: "LEVEL 2", text: "같은 음식 카드로 700kcal에 가까운 한 끼를 구성합니다. 성공하면 2점." },
-  { title: "LEVEL 3", text: "학습한 영양소 3가지 조건을 각각 확인합니다. 조건마다 1점." },
-];
 
 export function Home() {
   const navigate = useNavigate();
@@ -21,11 +17,12 @@ export function Home() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#f7f8f7]">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#f4f7ef] bg-[radial-gradient(circle_at_12%_16%,rgba(125,222,168,0.45),transparent_26%),radial-gradient(circle_at_88%_12%,rgba(255,196,120,0.5),transparent_24%),radial-gradient(circle_at_78%_82%,rgba(147,186,255,0.4),transparent_28%),radial-gradient(circle_at_16%_86%,rgba(255,176,168,0.35),transparent_24%),linear-gradient(180deg,#fffaf4_0%,#f3f8ef_48%,#fff6ea_100%)]">
+      <HomeBackdrop />
       <FoodCollage variant="frame" />
       <div className="relative z-10 flex min-h-screen flex-col">
         <Header />
-        <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center px-4 pb-12 pt-14 md:pt-20">
+        <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 pb-12 pt-14 md:pt-20">
           <h1 className="text-center text-5xl font-black tracking-tight md:text-7xl">Nutri-Deck</h1>
           <p className="mt-4 max-w-xl text-center text-lg font-semibold leading-8 text-neutral-800 md:text-2xl">
             음식 카드를 기억하고
@@ -56,7 +53,7 @@ export function Home() {
             ))}
           </div>
 
-          <label className="mt-5 flex items-center gap-2 text-sm font-semibold text-neutral-600">
+          <label className="hidden">
             <input
               type="checkbox"
               checked={demoCards}
@@ -76,17 +73,11 @@ export function Home() {
             게임 시작
           </button>
 
-          <div className="mt-12 grid w-full gap-3 md:grid-cols-3">
-            {steps.map((step) => (
-              <article key={step.title} className="rounded-3xl bg-white/90 p-4 text-left shadow-sm">
-                <p className="text-sm font-extrabold text-brand">{step.title}</p>
-                <p className="mt-2 text-sm leading-6 text-neutral-600">{step.text}</p>
-              </article>
-            ))}
-          </div>
+          <LevelGuide />
         </main>
         <Footer />
       </div>
     </div>
   );
 }
+

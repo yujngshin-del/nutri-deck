@@ -6,17 +6,19 @@ export function MealTray({
   foods,
   onRemove,
   showEnergy = false,
+  emptyText = "음식 카드를 누르면 선택한 메뉴가 여기에 모입니다.",
 }: {
   foods: Food[];
   onRemove: (foodCode: string) => void;
   showEnergy?: boolean;
+  emptyText?: string;
 }) {
   return (
     <section className="rounded-3xl bg-neutral-950/75 p-4 text-white ring-1 ring-white/10">
       <h2 className="text-sm font-extrabold">나의 한 끼</h2>
       {foods.length === 0 ? (
         <p className="mt-3 text-sm leading-6 text-white/65">
-          음식 카드를 누르면 선택한 메뉴가 여기에 모입니다.
+          {emptyText}
         </p>
       ) : (
         <ul className="mt-3 space-y-2">

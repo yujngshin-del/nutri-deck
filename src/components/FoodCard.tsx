@@ -86,6 +86,18 @@ export function FoodCard({
       <div className="px-1 pb-1 pt-3">
         <p className="text-lg font-extrabold leading-tight">{food.food_name}</p>
         <p className="mt-0.5 text-xs font-medium text-neutral-400">{food.food_code}</p>
+        {showNutrition && food.traits.length > 0 && (
+          <ul className="mt-2 flex flex-wrap gap-1">
+            {food.traits.map((trait) => (
+              <li
+                key={trait}
+                className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-600"
+              >
+                {trait}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {showNutrition ? (
           <ul className="mt-2 space-y-0.5 text-[13px] text-neutral-600 transition-opacity">
@@ -95,7 +107,6 @@ export function FoodCard({
                 className={cx(highlightKeys.includes(key) && "font-extrabold text-brand")}
               >
                 {NUTRIENT_META[key].label} {formatNutrient(key, food[key])}
-                <span className="ml-1 text-[11px] font-medium text-neutral-400">예시</span>
               </li>
             ))}
           </ul>

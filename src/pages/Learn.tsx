@@ -15,7 +15,7 @@ export function Learn() {
     <SimplePage title="학습 자료">
       <h1 className="text-3xl font-black">학습 자료</h1>
       <p className="mt-3 leading-7 text-neutral-600">
-        LEVEL 1에서 10초 동안 본 영양정보를 기억해, 이후 음식 선택에 사용합니다.
+        LEVEL 1에서 15초 동안 본 영양정보를 기억해, 이후 음식 선택에 사용합니다.
       </p>
       <div className="mt-6 grid gap-3">
         {lessons.map((lesson) => (
@@ -26,8 +26,8 @@ export function Learn() {
         ))}
       </div>
       <p className="mt-6 text-sm leading-6 text-neutral-500">
-        LEVEL 1은 단백질, 식이섬유, 나트륨을 각각 비교합니다. LEVEL 2는 고른 메뉴의 열량을 더해
-        700kcal와 비교합니다. LEVEL 3은 그 세 영양소를 조건마다 따로 확인합니다.
+        LEVEL 1은 단백질, 식이섬유, 나트륨을 각각 비교합니다. LEVEL 2는 음식을 최소 2개 골라
+        한 끼를 구성합니다. LEVEL 3은 음식을 최소 2개 골라 여러 조건을 동시에 확인하고, 조건마다 1점입니다.
       </p>
     </SimplePage>
   );

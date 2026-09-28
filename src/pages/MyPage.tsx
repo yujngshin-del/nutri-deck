@@ -21,7 +21,11 @@ export function MyPage() {
           <li key={match.id} className="rounded-2xl bg-white px-4 py-3 text-sm shadow-sm">
             <span className="font-bold">우승 {match.winnerName}</span>
             <span className="mt-1 block text-xs text-neutral-500">
-              {formatPlayedAt(match.playedAt)} · {match.players.map((player) => `${player.name} ${player.position}칸`).join(" · ")}
+              {formatPlayedAt(match.playedAt)} ·{" "}
+              {[...match.players]
+                .sort((left, right) => right.position - left.position || left.id - right.id)
+                .map((player, index) => `${index + 1}위 ${player.name}`)
+                .join(" · ")}
             </span>
           </li>
         ))}

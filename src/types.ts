@@ -10,6 +10,18 @@ export interface Food {
   sugar_g: number;
   sodium_mg: number;
   image: string;
+  /** 메뉴젠 재료 중량 합(g). 영양값은 이 중량 기준이다. */
+  menu_weight_g: number;
+  /** 교육용 특성 표시. 영양 점수가 아니다. */
+  traits: string[];
+  data_source: "MOCK" | "MenuGen" | "MenuGen+국가표준식품성분DB";
+  nutrition_source: "MOCK" | "국가표준식품성분DB";
+  menu_source: "MOCK" | "MenuGen";
+  is_demo_data: boolean;
+  calcium_mg?: number | null;
+  iron_mg?: number | null;
+  potassium_mg?: number | null;
+  vitamin_c_mg?: number | null;
 }
 
 export interface NutritionTotals {
@@ -32,13 +44,27 @@ export interface Level1Mission {
   direction: "highest" | "lowest";
 }
 
-export interface Level2Mission {
-  id: string;
-  level: 2;
-  prompt: string;
-  targetKcal: number;
-  successGap: number;
-}
+export type Level2Mission =
+  | {
+      id: string;
+      level: 2;
+      kind: "kcal";
+      label: string;
+      prompt: string;
+      targetKcal: number;
+      successGap: number;
+    }
+  | {
+      id: string;
+      level: 2;
+      kind: "threshold";
+      label: string;
+      prompt: string;
+      nutrient: NutrientKey;
+      op: "gte" | "lte";
+      value: number;
+      unit: string;
+    };
 
 export type ConditionOp = "between" | "gte" | "lte";
 
@@ -77,6 +103,7 @@ export interface MissionJudgement {
 }
 
 export interface MatchPlayer {
+  id: number;
   name: string;
   position: number;
   totalScore: number;
