@@ -8,7 +8,7 @@ export function Footer({ tone = "light" }: { tone?: "light" | "dark" }) {
         tone === "dark" ? "text-white/70" : "bg-white/75 text-neutral-500 backdrop-blur",
       )}
     >
-      © Nutri-Deck 2026 · 공공데이터 활용 공모전 시연용 프로토타입
+      © 밥상탐험대 2026 · 식품영양DB를 사용한 시연용 프로토타입
     </footer>
   );
 }

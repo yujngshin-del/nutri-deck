@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import type { Food, NutrientKey } from "../types";
 import { NUTRIENT_META } from "../types";
 import { cx, formatNutrient, splitFoodName } from "../utils/format";
+import { mealRole } from "../utils/mealRole";
 
 interface FoodCardProps {
   food: Food;
@@ -10,6 +11,7 @@ interface FoodCardProps {
   mark?: "none" | "correct" | "wrong";
   showNutrition?: boolean;
   highlightKeys?: NutrientKey[];
+  barScale?: Partial<Record<NutrientKey, number>>;
   disabled?: boolean;
   onSelect?: (foodCode: string) => void;
 }
@@ -30,6 +32,7 @@ export function FoodCard({
   mark = "none",
   showNutrition = false,
   highlightKeys = [],
+  barScale = {},
   disabled = false,
   onSelect,
 }: FoodCardProps) {
@@ -43,7 +46,7 @@ export function FoodCard({
       aria-pressed={selected}
       onClick={() => onSelect?.(food.food_code)}
       className={cx(
-        "relative rounded-[24px] bg-white p-3 text-left shadow-[0_10px_30px_rgba(16,24,20,0.08)] transition",
+        "relative w-full min-w-0 rounded-[24px] bg-white p-3 text-left shadow-[0_10px_30px_rgba(16,24,20,0.08)] transition",
         !disabled && "hover:-translate-y-0.5",
         selected || mark === "correct"
           ? "ring-4 ring-[#3ee08f]"
@@ -71,7 +74,7 @@ export function FoodCard({
 
       <div className="overflow-hidden rounded-2xl bg-neutral-100">
         {broken ? (
-          <div className="grid h-32 place-items-center text-sm font-bold text-neutral-500 sm:h-36">
+          <div className="grid h-32 place-items-center text-sm font-bold text-neutral-500">
             {food.food_name}
           </div>
         ) : (
@@ -79,7 +82,7 @@ export function FoodCard({
             src={food.image}
             alt={food.food_name}
             onError={() => setBroken(true)}
-            className="h-32 w-full object-cover sm:h-36"
+            className="h-32 w-full object-cover"
           />
         )}
       </div>
@@ -87,30 +90,27 @@ export function FoodCard({
       <div className="px-1 pb-1 pt-3">
         <p className="text-lg font-extrabold leading-tight">{title}</p>
         {detail ? <p className="mt-1 text-sm font-bold leading-snug text-brand">{detail}</p> : null}
+        <p className="mt-1 inline-flex rounded-full bg-[#eef8f2] px-2 py-0.5 text-[11px] font-black text-[#157a3e]">
+          {mealRole(food)}
+        </p>
         <p className="mt-0.5 text-xs font-medium text-neutral-400">{food.food_code}</p>
-        {showNutrition && food.traits.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-1">
-            {food.traits.map((trait) => (
-              <li
-                key={trait}
-                className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-bold text-neutral-600"
-              >
-                {trait}
-              </li>
-            ))}
-          </ul>
-        )}
 
         {showNutrition ? (
-          <ul className="mt-2 space-y-0.5 text-[13px] text-neutral-600 transition-opacity">
-            {allKeys.map((key) => (
-              <li
-                key={key}
-                className={cx(highlightKeys.includes(key) && "font-extrabold text-brand")}
-              >
-                {NUTRIENT_META[key].label} {formatNutrient(key, food[key])}
-              </li>
-            ))}
+          <ul className="mt-2 space-y-2">
+            {(highlightKeys.length > 0 ? highlightKeys : allKeys).map((key) => {
+              const scale = barScale[key] || food[key] || 1;
+              const width = Math.max(6, Math.round((food[key] / scale) * 100));
+              return (
+                <li key={key}>
+                  <p className="text-[13px] font-extrabold text-brand">
+                    {NUTRIENT_META[key].label} {formatNutrient(key, food[key])}
+                  </p>
+                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+                    <div className="h-full rounded-full bg-[#2fbe78]" style={{ width: `${width}%` }} />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="mt-3 rounded-xl bg-neutral-50 px-3 py-2 text-center text-xs font-bold text-neutral-400">

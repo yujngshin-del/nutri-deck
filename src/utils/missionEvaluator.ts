@@ -62,7 +62,7 @@ function evaluateLevel1(
     headline: correct ? "정답입니다!" : "오답입니다.",
     detail: correct
       ? `${selected?.food_name ?? ""}의 ${meta.label}은 ${actual}입니다.`
-      : `정답은 ${answers.map((food) => food.food_name).join(", ")}입니다.`,
+      : "선택한 음식이 정답이 아닙니다.",
     conditions: [
       {
         id: mission.id,

@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import type { Food } from "../types";
 import { formatNutrient, splitFoodName } from "../utils/format";
+import { mealRole } from "../utils/mealRole";
 
 export function MealTray({
   foods,
@@ -35,7 +36,10 @@ export function MealTray({
                 className="h-12 w-12 rounded-xl object-cover"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-extrabold">{name.title}</p>
+                <p className="truncate text-sm font-extrabold">
+                  <span className="mr-1 text-[11px] font-black text-[#157a3e]">{mealRole(food)}</span>
+                  {name.title}
+                </p>
                 {name.detail ? (
                   <p className="truncate text-[11px] font-bold text-[#157a3e]">{name.detail}</p>
                 ) : null}

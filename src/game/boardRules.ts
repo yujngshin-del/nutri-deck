@@ -1,5 +1,12 @@
 import type { ConditionJudgement, Food, NutritionTotals } from "../types";
-import { TRACK_SPACES, level2Missions, level3Missions, studyNutrients, takeMissionIds } from "../data/missions";
+import {
+  MAX_ATTEMPTS,
+  TRACK_SPACES,
+  level1Rounds,
+  level2Missions,
+  level3Missions,
+  takeMissionIds,
+} from "../data/missions";
 import { createPlayerFoodSets } from "../utils/foodSets";
 
 export type StageId = "level1" | "level2" | "level3";
@@ -60,6 +67,11 @@ export interface BoardSession {
   currentPlayerIndex: number;
   pendingPoints: number;
   roundLog: RoundNote[];
+  /** LEVEL 2·3 현재 문제의 시도 횟수. 1부터 센다. */
+  attempt: number;
+  /** 아직 확정하지 않은 이번 문제의 최고 점수. */
+  bestPoints: number;
+  roundLabel: string;
   stageMissionIds: string[];
   usedMissionIds: string[];
   /** LEVEL 3 이후 LEVEL 2로 돌아왔을 때, 바뀐 문제와 카드를 다시 보여 준다. */
@@ -108,7 +120,10 @@ export function createSession(playerCount: number, demoCards: boolean): BoardSes
     currentPlayerIndex: 0,
     pendingPoints: 0,
     roundLog: [],
-    stageMissionIds: studyNutrients.map((nutrient) => nutrient.id),
+    attempt: 1,
+    bestPoints: 0,
+    roundLabel: "",
+    stageMissionIds: level1Rounds.map((round) => round.id),
     usedMissionIds: [],
     reviewMissions: false,
     feedback: null,
@@ -122,58 +137,106 @@ export function openTurn(session: BoardSession): BoardSession {
     round: 1,
     pendingPoints: 0,
     roundLog: [],
+    attempt: 1,
+    bestPoints: 0,
+    roundLabel: "",
     feedback: null,
-    phase: session.stage === "level1" || session.reviewMissions ? "preview" : "answer",
-    studyToken: 0,
-  };
-}
-
-export function beginStudy(session: BoardSession): BoardSession {
-  return {
-    ...session,
-    phase: "study",
-    studyToken: Date.now(),
+    phase: session.stage === "level1" ? "study" : session.reviewMissions ? "preview" : "answer",
+    studyToken: session.stage === "level1" ? Date.now() : 0,
   };
 }
 
 export function recordRound(
   session: BoardSession,
   points: number,
+  maxPoints: number,
   result: Omit<TurnFeedback, "points" | "steps" | "reachedGoal">,
   label: string,
 ): BoardSession {
+  const meal = session.stage !== "level1";
+  const attempt = session.attempt || 1;
+  const bestPoints = Math.max(session.bestPoints || 0, points);
+  const canRetry = meal && attempt < MAX_ATTEMPTS && points < maxPoints;
+  const feedback: TurnFeedback = {
+    ...result,
+    points,
+    steps: 0,
+    reachedGoal: false,
+  };
+
+  if (canRetry) {
+    return {
+      ...session,
+      phase: "roundResult",
+      bestPoints,
+      roundLabel: label,
+      feedback,
+    };
+  }
+
+  const awarded = meal ? bestPoints : points;
   return {
     ...session,
     phase: "roundResult",
+    bestPoints: 0,
+    roundLabel: label,
+    pendingPoints: session.pendingPoints + awarded,
+    roundLog: [...session.roundLog, { round: session.round, label, points: awarded }],
+    feedback: { ...feedback, points: awarded },
+  };
+}
+
+/** 기회를 남긴 채 결과를 본 뒤, 최고 점수로 이번 문제를 확정한다. */
+function commitPendingRound(session: BoardSession): BoardSession {
+  if (!session.feedback) return session;
+  if (session.roundLog.some((note) => note.round === session.round)) return session;
+  const points = Math.max(session.bestPoints || 0, session.feedback.points);
+  return {
+    ...session,
+    bestPoints: 0,
     pendingPoints: session.pendingPoints + points,
-    roundLog: [...session.roundLog, { round: session.round, label, points }],
-    feedback: {
-      ...result,
-      points,
-      steps: 0,
-      reachedGoal: false,
-    },
+    roundLog: [
+      ...session.roundLog,
+      { round: session.round, label: session.roundLabel || "문제", points },
+    ],
+    feedback: { ...session.feedback, points },
+  };
+}
+
+export function retryRound(session: BoardSession): BoardSession {
+  if (session.stage === "level1") return session;
+  if ((session.attempt || 1) >= MAX_ATTEMPTS) return session;
+  if (session.roundLog.some((note) => note.round === session.round)) return session;
+  return {
+    ...session,
+    attempt: (session.attempt || 1) + 1,
+    phase: "answer",
+    feedback: null,
   };
 }
 
 export function confirmRound(session: BoardSession): BoardSession {
-  const current = session.players[session.currentPlayerIndex];
-  const projected = (current?.position ?? 0) + session.pendingPoints;
-  if (projected >= TRACK_SPACES) return beginMove(session);
+  const locked = commitPendingRound(session);
+  const current = locked.players[locked.currentPlayerIndex];
+  const projected = (current?.position ?? 0) + locked.pendingPoints;
+  if (projected >= TRACK_SPACES) return beginMove(locked);
 
-  const roundCount = Math.max(session.stageMissionIds.length, 1);
-  if (session.round < roundCount) {
+  const roundCount = Math.max(locked.stageMissionIds.length, 1);
+  if (locked.round < roundCount) {
     return {
-      ...session,
-      round: session.round + 1,
+      ...locked,
+      round: locked.round + 1,
       phase: "answer",
       feedback: null,
+      attempt: 1,
+      bestPoints: 0,
+      roundLabel: "",
     };
   }
-  if (session.stage === "level1") {
-    return { ...session, phase: "sessionResult" };
+  if (locked.stage === "level1") {
+    return { ...locked, phase: "sessionResult" };
   }
-  return beginMove(session);
+  return beginMove(locked);
 }
 
 export function beginMove(session: BoardSession): BoardSession {
@@ -224,6 +287,9 @@ export function finishMove(session: BoardSession): BoardSession {
       feedback: null,
       pendingPoints: 0,
       roundLog: [],
+      attempt: 1,
+      bestPoints: 0,
+      roundLabel: "",
     };
   }
 
@@ -254,6 +320,9 @@ function openStage(
     feedback: null,
     pendingPoints: 0,
     roundLog: [],
+    attempt: 1,
+    bestPoints: 0,
+    roundLabel: "",
     stageMissionIds: deal.ids,
     usedMissionIds: deal.used,
     reviewMissions: false,
@@ -287,6 +356,7 @@ export function isBoardSession(value: unknown): value is BoardSession {
     typeof session.pendingPoints === "number" &&
     Array.isArray(session.stageMissionIds) &&
     session.stageMissionIds.length > 0 &&
+    (session.stage !== "level1" || session.stageMissionIds.length === level1Rounds.length) &&
     Array.isArray(session.usedMissionIds) &&
     phases.includes(session.phase) &&
     (session.stage === "level1" || session.stage === "level2" || session.stage === "level3")

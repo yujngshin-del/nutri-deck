@@ -1,14 +1,7 @@
 import type { ReactNode } from "react";
-import { cx } from "../utils/format";
 
-export function FoodCardGrid({
-  children,
-  columns = "xl:grid-cols-3",
-}: {
-  children: ReactNode;
-  columns?: string;
-}) {
+export function FoodCardGrid({ children }: { children: ReactNode }) {
   return (
-    <div className={cx("grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2", columns)}>{children}</div>
+    <div className="mx-auto grid w-full max-w-[840px] grid-cols-3 gap-4">{children}</div>
   );
 }

@@ -11,7 +11,7 @@ export function SimplePage({
   children: ReactNode;
 }) {
   useEffect(() => {
-    document.title = `${title} · Nutri-Deck`;
+    document.title = `${title} · 밥상탐험대`;
   }, [title]);
 
   return (

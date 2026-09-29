@@ -10,27 +10,27 @@ import { Header } from "../components/Header";
 import { PlayerRail } from "../components/PlayerRail";
 import { useGame } from "../context/GameContext";
 import {
-  MEAL_MIN_SIZE,
   STUDY_SECONDS,
   TRACK_SPACES,
+  level1Round,
   level2MissionById,
   level3MissionById,
   missionForRound,
-  studyNutrients,
 } from "../data/missions";
 import {
   beginMove,
-  beginStudy,
   confirmRound,
   createSession,
   finishMove,
   openTurn,
   recordRound,
+  retryRound,
   stageTitle,
   type BoardSession,
 } from "../game/boardRules";
 import { useCountdown } from "../hooks/useCountdown";
 import { bestFoods } from "../utils/missionEvaluator";
+import { cardsForRound, mealRole, selectionCoversMeal } from "../utils/mealRole";
 import { readBoardSession, writeBoardSession } from "../utils/scoreStore";
 
 interface StartRequest {
@@ -60,7 +60,7 @@ export function Play() {
   const timeLeft = useCountdown(session?.phase === "study", session?.studyToken ?? 0, STUDY_SECONDS);
 
   useEffect(() => {
-    document.title = "Nutri-Deck 보드";
+    document.title = "밥상탐험대";
   }, []);
 
   useEffect(() => {
@@ -154,15 +154,24 @@ export function Play() {
       setSelected([foodCode]);
       return;
     }
-    setSelected((codes) =>
-      codes.includes(foodCode) ? codes.filter((code) => code !== foodCode) : [...codes, foodCode],
-    );
+    const foods = session.players[session.currentPlayerIndex]?.foodSet ?? [];
+    const picked = foods.find((food) => food.food_code === foodCode);
+    if (!picked) return;
+    const role = mealRole(picked);
+    setSelected((codes) => {
+      const rest = codes.filter((code) => {
+        const other = foods.find((food) => food.food_code === code);
+        return other ? mealRole(other) !== role : false;
+      });
+      return codes.includes(foodCode) ? rest : [...rest, foodCode];
+    });
   }
 
   async function submit() {
     if (!session || session.phase !== "answer" || selected.length === 0 || busy) return;
-    if (session.stage !== "level1" && selected.length < MEAL_MIN_SIZE) return;
-    const dealt = session.players[session.currentPlayerIndex]?.foodSet ?? [];
+    const owned = session.players[session.currentPlayerIndex]?.foodSet ?? [];
+    if (session.stage !== "level1" && !selectionCoversMeal(owned, selected)) return;
+    const dealt = session.stage === "level1" ? cardsForRound(owned, session.round) : owned;
     setBusy(true);
     try {
       if (session.stage === "level1") {
@@ -180,6 +189,7 @@ export function Play() {
             ? recordRound(
                 currentSession,
                 judgement.points,
+                judgement.maxPoints,
                 {
                   headline: judgement.headline,
                   detail: judgement.detail,
@@ -187,7 +197,7 @@ export function Play() {
                   conditions: judgement.conditions,
                   totals: null,
                 },
-                studyNutrients[session.round - 1]?.label ?? "영양소",
+                level1Round(session.round).label,
               )
             : currentSession,
         );
@@ -208,6 +218,7 @@ export function Play() {
             ? recordRound(
                 currentSession,
                 judgement.points,
+                judgement.maxPoints,
                 {
                   headline: judgement.headline,
                   detail: judgement.detail,
@@ -233,6 +244,7 @@ export function Play() {
           ? recordRound(
               currentSession,
               judgement.points,
+              judgement.maxPoints,
               {
                 headline: judgement.headline,
                 detail: judgement.detail,
@@ -249,10 +261,15 @@ export function Play() {
     }
   }
 
+  function retry() {
+    setSelected([]);
+    setSession((currentSession) => (currentSession ? retryRound(currentSession) : currentSession));
+  }
+
   function confirm() {
     setSession((currentSession) => {
       if (!currentSession) return currentSession;
-      if (currentSession.phase === "preview") return beginStudy(currentSession);
+      if (currentSession.phase === "preview") return { ...currentSession, phase: "answer" };
       if (currentSession.phase === "roundResult") return confirmRound(currentSession);
       if (currentSession.phase === "sessionResult") return beginMove(currentSession);
       return currentSession;
@@ -346,6 +363,7 @@ export function Play() {
           onToggle={toggle}
           onSubmit={() => void submit()}
           onConfirm={confirm}
+          onRetry={retry}
         />
       )}
     </div>

@@ -28,9 +28,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <Link to="/" className="flex items-center gap-2 font-extrabold tracking-tight">
+        <Link to="/" className="flex items-center gap-2">
           <Logo />
-          <span>Nutri-Deck</span>
+          <img src="/wordmark.png" alt="밥상탐험대" className="h-9 w-auto" />
         </Link>
 
         <nav className="ml-6 hidden items-center gap-7 text-[15px] md:flex">
