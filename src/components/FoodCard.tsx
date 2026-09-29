@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import type { Food, NutrientKey } from "../types";
 import { NUTRIENT_META } from "../types";
-import { cx, formatNutrient } from "../utils/format";
+import { cx, formatNutrient, splitFoodName } from "../utils/format";
 
 interface FoodCardProps {
   food: Food;
@@ -34,6 +34,7 @@ export function FoodCard({
   onSelect,
 }: FoodCardProps) {
   const [broken, setBroken] = useState(false);
+  const { title, detail } = splitFoodName(food.food_name);
 
   return (
     <button
@@ -84,7 +85,8 @@ export function FoodCard({
       </div>
 
       <div className="px-1 pb-1 pt-3">
-        <p className="text-lg font-extrabold leading-tight">{food.food_name}</p>
+        <p className="text-lg font-extrabold leading-tight">{title}</p>
+        {detail ? <p className="mt-1 text-sm font-bold leading-snug text-brand">{detail}</p> : null}
         <p className="mt-0.5 text-xs font-medium text-neutral-400">{food.food_code}</p>
         {showNutrition && food.traits.length > 0 && (
           <ul className="mt-2 flex flex-wrap gap-1">

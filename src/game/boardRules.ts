@@ -62,6 +62,8 @@ export interface BoardSession {
   roundLog: RoundNote[];
   stageMissionIds: string[];
   usedMissionIds: string[];
+  /** LEVEL 3 이후 LEVEL 2로 돌아왔을 때, 바뀐 문제와 카드를 다시 보여 준다. */
+  reviewMissions?: boolean;
   feedback: TurnFeedback | null;
   winnerId: number | null;
 }
@@ -108,6 +110,7 @@ export function createSession(playerCount: number, demoCards: boolean): BoardSes
     roundLog: [],
     stageMissionIds: studyNutrients.map((nutrient) => nutrient.id),
     usedMissionIds: [],
+    reviewMissions: false,
     feedback: null,
     winnerId: null,
   };
@@ -120,7 +123,7 @@ export function openTurn(session: BoardSession): BoardSession {
     pendingPoints: 0,
     roundLog: [],
     feedback: null,
-    phase: session.stage === "level1" ? "preview" : "answer",
+    phase: session.stage === "level1" || session.reviewMissions ? "preview" : "answer",
     studyToken: 0,
   };
 }
@@ -232,7 +235,7 @@ export function finishMove(session: BoardSession): BoardSession {
     return openStage(session, "level3", level3Missions, 3);
   }
 
-  return openStage(session, "level2", level2Missions, 4);
+  return { ...openStage(session, "level2", level2Missions, 4), reviewMissions: true };
 }
 
 function openStage(
@@ -253,6 +256,7 @@ function openStage(
     roundLog: [],
     stageMissionIds: deal.ids,
     usedMissionIds: deal.used,
+    reviewMissions: false,
   };
 }
 

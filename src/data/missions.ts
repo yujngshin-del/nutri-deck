@@ -28,11 +28,11 @@ export const studyNutrients: StudyNutrient[] = [
     prompt: "단백질 함량이 가장 높은 음식은 무엇일까요?",
   },
   {
-    id: "fiber",
-    key: "fiber_g",
-    label: "식이섬유",
+    id: "carbohydrate",
+    key: "carbohydrate_g",
+    label: "탄수화물",
     direction: "highest",
-    prompt: "식이섬유 함량이 가장 높은 음식은 무엇일까요?",
+    prompt: "탄수화물 함량이 가장 높은 음식은 무엇일까요?",
   },
   {
     id: "sodium",
@@ -44,10 +44,10 @@ export const studyNutrients: StudyNutrient[] = [
 ];
 
 /**
- * 성인 영양성분 기준치 한 끼(1/3).
- * 열량 2,000kcal → 670kcal, 단백질 55g → 18g, 지방 54g → 18g, 당류 100g → 33g.
- * 식이섬유 충분섭취량 25g → 8g. 나트륨 2,000mg의 1/3은 667mg이나, 카드 2장으로 맞추도록 700mg.
- * 탄수화물은 670kcal의 약 55%인 90g 이상.
+ * 2,000kcal 한 끼(1/3)에 맞춘 조건.
+ * 열량 670kcal ±50. 탄수화물 하한 83g(670kcal의 약 50%). 83~108g 구간은
+ * 일부 세트에서 단백질·나트륨과 동시에 맞출 수 없어 상한은 두지 않는다.
+ * 단백질 하한 18g. 나트륨 2,000mg의 1/3인 667mg 이하.
  * 앞에 있는 4개가 첫 LEVEL 2다.
  */
 export const level2Missions: Level2Mission[] = [
@@ -72,37 +72,26 @@ export const level2Missions: Level2Mission[] = [
     unit: "g",
   },
   {
-    id: "fiber-8",
-    level: 2,
-    kind: "threshold",
-    label: "식이섬유",
-    prompt: "식이섬유 8g 이상인 한 끼를 구성하세요.",
-    nutrient: "fiber_g",
-    op: "gte",
-    value: 8,
-    unit: "g",
-  },
-  {
-    id: "sodium-700",
-    level: 2,
-    kind: "threshold",
-    label: "나트륨",
-    prompt: "나트륨 700mg 이하인 한 끼를 구성하세요.",
-    nutrient: "sodium_mg",
-    op: "lte",
-    value: 700,
-    unit: "mg",
-  },
-  {
-    id: "carb-90",
+    id: "carb-83",
     level: 2,
     kind: "threshold",
     label: "탄수화물",
-    prompt: "탄수화물 90g 이상인 한 끼를 구성하세요.",
+    prompt: "탄수화물 83g 이상인 한 끼를 구성하세요.",
     nutrient: "carbohydrate_g",
     op: "gte",
-    value: 90,
+    value: 83,
     unit: "g",
+  },
+  {
+    id: "sodium-667",
+    level: 2,
+    kind: "threshold",
+    label: "나트륨",
+    prompt: "나트륨 667mg 이하인 한 끼를 구성하세요.",
+    nutrient: "sodium_mg",
+    op: "lte",
+    value: 667,
+    unit: "mg",
   },
   {
     id: "fat-18",
@@ -131,40 +120,40 @@ export const level2Missions: Level2Mission[] = [
 /** 앞에 있는 3개가 첫 LEVEL 3다. 조건은 LEVEL 2와 같고, 조건마다 1점이다. */
 export const level3Missions: Level3Mission[] = [
   {
-    id: "protein18-fiber8",
+    id: "protein18-carb83",
     level: 3,
-    prompt: "단백질 18g 이상, 식이섬유 8g 이상인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 탄수화물 83g 이상인 한 끼를 구성하세요.",
     conditions: [
       { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
-      { id: "fiber", label: "식이섬유", nutrient: "fiber_g", op: "gte", value: 8, unit: "g" },
+      { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 83, unit: "g" },
     ],
   },
   {
-    id: "protein18-sodium700",
+    id: "protein18-sodium667",
     level: 3,
-    prompt: "단백질 18g 이상, 나트륨 700mg 이하인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 나트륨 667mg 이하인 한 끼를 구성하세요.",
     conditions: [
       { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
-      { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 700, unit: "mg" },
+      { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 667, unit: "mg" },
     ],
   },
   {
-    id: "protein18-fiber8-sodium700",
+    id: "protein18-carb83-sodium667",
     level: 3,
-    prompt: "단백질 18g 이상, 식이섬유 8g 이상, 나트륨 700mg 이하인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 탄수화물 83g 이상, 나트륨 667mg 이하인 한 끼를 구성하세요.",
     conditions: [
       { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
-      { id: "fiber", label: "식이섬유", nutrient: "fiber_g", op: "gte", value: 8, unit: "g" },
-      { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 700, unit: "mg" },
+      { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 83, unit: "g" },
+      { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 667, unit: "mg" },
     ],
   },
   {
-    id: "fiber8-sodium700",
+    id: "carb83-sodium667",
     level: 3,
-    prompt: "식이섬유 8g 이상, 나트륨 700mg 이하인 한 끼를 구성하세요.",
+    prompt: "탄수화물 83g 이상, 나트륨 667mg 이하인 한 끼를 구성하세요.",
     conditions: [
-      { id: "fiber", label: "식이섬유", nutrient: "fiber_g", op: "gte", value: 8, unit: "g" },
-      { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 700, unit: "mg" },
+      { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 83, unit: "g" },
+      { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 667, unit: "mg" },
     ],
   },
   {
@@ -177,11 +166,11 @@ export const level3Missions: Level3Mission[] = [
     ],
   },
   {
-    id: "carb90-sugar33",
+    id: "carb83-sugar33",
     level: 3,
-    prompt: "탄수화물 90g 이상, 당류 33g 이하인 한 끼를 구성하세요.",
+    prompt: "탄수화물 83g 이상, 당류 33g 이하인 한 끼를 구성하세요.",
     conditions: [
-      { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 90, unit: "g" },
+      { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 83, unit: "g" },
       { id: "sugar", label: "당류", nutrient: "sugar_g", op: "lte", value: 33, unit: "g" },
     ],
   },

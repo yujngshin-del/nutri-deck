@@ -26,8 +26,9 @@ export function Learn() {
         ))}
       </div>
       <p className="mt-6 text-sm leading-6 text-neutral-500">
-        LEVEL 1은 단백질, 식이섬유, 나트륨을 각각 비교합니다. LEVEL 2는 음식을 최소 2개 골라
-        한 끼를 구성합니다. LEVEL 3은 음식을 최소 2개 골라 여러 조건을 동시에 확인하고, 조건마다 1점입니다.
+        LEVEL 1은 단백질, 탄수화물, 나트륨을 각각 비교하고 문제마다 1점입니다. LEVEL 2는 음식을
+        최소 2개 골라 한 끼를 구성하고, 성공하면 2점입니다. LEVEL 3은 음식을 최소 2개 골라 여러
+        조건을 동시에 확인하고, 조건마다 1점입니다.
       </p>
     </SimplePage>
   );

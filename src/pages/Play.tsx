@@ -307,6 +307,11 @@ export function Play() {
               <div className="turn-plaque px-8 py-3 sm:px-14">
                 <p className="text-xl font-black sm:text-2xl">{current.name}의 차례입니다</p>
                 <p className="mt-0.5 text-sm font-semibold text-[#f4e7cf]/80">{stageTitle(session.stage)}</p>
+                {session.reviewMissions ? (
+                  <p className="mt-1 text-sm font-bold text-[#f4e7cf]">
+                    조건이 바뀌었습니다. 문제와 카드를 다시 확인합니다.
+                  </p>
+                ) : null}
               </div>
               <button
                 type="button"

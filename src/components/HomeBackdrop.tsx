@@ -1,6 +1,6 @@
 const chips = [
   { label: "단백질", note: "g", className: "left-[6%] top-[22%] bg-[#e7f8ee] text-[#157a3e]", hide: "hidden md:block" },
-  { label: "식이섬유", note: "g", className: "right-[7%] top-[20%] bg-[#e7f3ff] text-[#2457c5]", hide: "hidden md:block" },
+  { label: "탄수화물", note: "g", className: "right-[7%] top-[20%] bg-[#e7f3ff] text-[#2457c5]", hide: "hidden md:block" },
   { label: "나트륨", note: "mg", className: "left-[8%] top-[58%] bg-[#fff1e4] text-[#c2410c]", hide: "hidden lg:block" },
   { label: "열량", note: "kcal", className: "right-[9%] top-[62%] bg-[#fff7d6] text-[#a16207]", hide: "hidden lg:block" },
   { label: "비타민", note: "", className: "left-[18%] bottom-[8%] bg-[#f3e8ff] text-[#6d28d9]", hide: "hidden xl:block" },

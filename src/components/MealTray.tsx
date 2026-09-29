@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import type { Food } from "../types";
-import { formatNutrient } from "../utils/format";
+import { formatNutrient, splitFoodName } from "../utils/format";
 
 export function MealTray({
   foods,
@@ -22,7 +22,9 @@ export function MealTray({
         </p>
       ) : (
         <ul className="mt-3 space-y-2">
-          {foods.map((food) => (
+          {foods.map((food) => {
+            const name = splitFoodName(food.food_name);
+            return (
             <li
               key={food.food_code}
               className="flex items-center gap-2 rounded-2xl bg-white p-2 text-neutral-900"
@@ -33,7 +35,10 @@ export function MealTray({
                 className="h-12 w-12 rounded-xl object-cover"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-extrabold">{food.food_name}</p>
+                <p className="truncate text-sm font-extrabold">{name.title}</p>
+                {name.detail ? (
+                  <p className="truncate text-[11px] font-bold text-[#157a3e]">{name.detail}</p>
+                ) : null}
                 <p className="text-[11px] text-neutral-400">
                   {food.food_code}
                   {showEnergy ? ` · ${formatNutrient("energy_kcal", food.energy_kcal)}` : ""}
@@ -48,7 +53,8 @@ export function MealTray({
                 <X className="h-3.5 w-3.5" />
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>

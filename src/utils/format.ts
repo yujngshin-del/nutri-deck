@@ -16,6 +16,13 @@ export function formatNutrient(key: NutrientKey, value: number): string {
   return `${text}g`;
 }
 
+/** 괄호 안이 같은 계열 메뉴의 차이다. 예: 불고기 / 돼지고기, 고추장 */
+export function splitFoodName(name: string): { title: string; detail: string | null } {
+  const matched = name.match(/^(.*)\(([^)]+)\)$/);
+  if (!matched) return { title: name, detail: null };
+  return { title: matched[1].trim(), detail: matched[2].trim() };
+}
+
 export function formatPlayedAt(iso: string): string {
   return new Date(iso).toLocaleString("ko-KR", {
     month: "short",

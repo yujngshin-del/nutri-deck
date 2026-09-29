@@ -71,8 +71,8 @@ export function GameModal({
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 sm:px-8">
-          {session.phase === "preview" && <PreviewBody />}
-          {session.phase === "study" && <StudyBody seconds={seconds} />}
+          {session.phase === "preview" && <PreviewBody session={session} />}
+          {session.phase === "study" && <StudyBody session={session} seconds={seconds} />}
           {session.phase === "answer" && <QuestionBody session={session} />}
           {session.phase === "roundResult" && session.feedback && (
             <RoundResult session={session} />
@@ -96,7 +96,7 @@ export function GameModal({
                     key={food.food_code}
                     food={food}
                     showNutrition={session.phase === "study"}
-                    highlightKeys={session.phase === "study" ? studyNutrients.map((item) => item.key) : []}
+                    highlightKeys={session.phase === "study" ? studyHighlightKeys(session) : []}
                     selected={session.phase === "answer" && selected.includes(food.food_code)}
                     disabled={session.phase !== "answer"}
                     onSelect={onToggle}
@@ -153,7 +153,43 @@ export function GameModal({
   );
 }
 
-function PreviewBody() {
+function reviewMissions(session: BoardSession) {
+  return session.stageMissionIds.map((id) => level2MissionById(id));
+}
+
+function studyHighlightKeys(session: BoardSession): NutrientKey[] {
+  if (!session.reviewMissions) return studyNutrients.map((item) => item.key);
+  return [
+    ...new Set(
+      reviewMissions(session).map((mission) =>
+        mission.kind === "kcal" ? "energy_kcal" : mission.nutrient,
+      ),
+    ),
+  ];
+}
+
+function PreviewBody({ session }: { session: BoardSession }) {
+  if (session.reviewMissions) {
+    const missions = reviewMissions(session);
+    return (
+      <div className="mx-auto max-w-xl py-4">
+        <p className="text-base font-semibold leading-7 text-neutral-600">
+          조건이 바뀌었습니다. 아래 문제를 읽은 뒤 확인을 누르세요. 그다음에 음식 카드의 영양정보가 {STUDY_SECONDS}초 동안 보입니다.
+        </p>
+        <ol className="mt-5 space-y-3">
+          {missions.map((mission, index) => (
+            <li key={mission.id} className="rounded-2xl bg-white px-5 py-4 shadow-sm">
+              <p className="text-xs font-black tracking-wide text-brand">
+                {index + 1}. {mission.label}
+              </p>
+              <p className="mt-1 text-lg font-black">{mission.prompt}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-xl py-4">
       <p className="text-base font-semibold leading-7 text-neutral-600">
@@ -173,11 +209,16 @@ function PreviewBody() {
   );
 }
 
-function StudyBody({ seconds }: { seconds: number }) {
+function StudyBody({ session, seconds }: { session: BoardSession; seconds: number }) {
+  const reviewLabels = session.reviewMissions
+    ? [...new Set(reviewMissions(session).map((mission) => mission.label))].join(", ")
+    : "";
   return (
     <div className="mb-5 flex items-center justify-between gap-4">
       <p className="text-base font-semibold text-neutral-600">
-        이번 게임에서는 음식의 영양정보를 기억합니다. 학습 영양소는 단백질, 식이섬유, 나트륨입니다.
+        {session.reviewMissions
+          ? `조건이 바뀌었습니다. 이번 문제는 ${reviewLabels}입니다. 카드의 영양정보를 다시 확인하세요.`
+          : "이번 게임에서는 음식의 영양정보를 기억합니다. 학습 영양소는 단백질, 탄수화물, 나트륨입니다."}
       </p>
       <p className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-white text-3xl font-black text-brand shadow">
         {seconds}

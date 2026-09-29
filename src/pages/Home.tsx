@@ -32,7 +32,7 @@ export function Home() {
             가장 먼저 GOAL에 도착하세요
           </p>
           <p className="mt-3 text-center text-sm text-neutral-500">
-            한 화면에서 순서대로 플레이하는 보드게임입니다. 1점은 말 1칸입니다.
+            한 화면에서 순서대로 플레이하는 보드게임입니다. LEVEL 1은 문제마다 1점, LEVEL 2는 성공하면 2점입니다. 1점은 말 1칸입니다.
           </p>
 
           <p className="mt-10 text-sm font-extrabold text-neutral-700">플레이어 수를 선택하세요.</p>
