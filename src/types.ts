@@ -42,6 +42,8 @@ export interface Level1Mission {
   prompt: string;
   nutrient: NutrientKey;
   direction: "highest" | "lowest";
+  /** 3장 비교는 1점, 9장 전체 비교는 2점. */
+  points: number;
 }
 
 export type Level2Mission =

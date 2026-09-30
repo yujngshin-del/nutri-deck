@@ -10,6 +10,7 @@ import { Header } from "../components/Header";
 import { PlayerRail } from "../components/PlayerRail";
 import { useGame } from "../context/GameContext";
 import {
+  MAX_ATTEMPTS,
   STUDY_SECONDS,
   TRACK_SPACES,
   level1Round,
@@ -29,9 +30,17 @@ import {
   type BoardSession,
 } from "../game/boardRules";
 import { useCountdown } from "../hooks/useCountdown";
-import { bestFoods } from "../utils/missionEvaluator";
-import { cardsForRound, mealRole, selectionCoversMeal } from "../utils/mealRole";
+import { bestFoods, meetsLevel2, meetsLevel3 } from "../utils/missionEvaluator";
+import { mealLabel, samplePassingMeals } from "../utils/sampleMeals";
+import { cardsForRound, mealSlot, selectionCoversMeal } from "../utils/mealRole";
 import { readBoardSession, writeBoardSession } from "../utils/scoreStore";
+import type { Food } from "../types";
+
+/** 한 끼 예시는 세 기회를 모두 쓴 뒤에, 만점을 못 했을 때만 보여 준다. */
+function exampleMeals(attempt: number, points: number, maxPoints: number, meals: Food[][]): string[] {
+  if ((attempt || 1) < MAX_ATTEMPTS || points >= maxPoints) return [];
+  return meals.map(mealLabel);
+}
 
 interface StartRequest {
   playerCount?: number;
@@ -157,11 +166,11 @@ export function Play() {
     const foods = session.players[session.currentPlayerIndex]?.foodSet ?? [];
     const picked = foods.find((food) => food.food_code === foodCode);
     if (!picked) return;
-    const role = mealRole(picked);
+    const slot = mealSlot(picked);
     setSelected((codes) => {
       const rest = codes.filter((code) => {
         const other = foods.find((food) => food.food_code === code);
-        return other ? mealRole(other) !== role : false;
+        return other ? mealSlot(other) !== slot : false;
       });
       return codes.includes(foodCode) ? rest : [...rest, foodCode];
     });
@@ -222,7 +231,12 @@ export function Play() {
                 {
                   headline: judgement.headline,
                   detail: judgement.detail,
-                  answerNames: [],
+                  answerNames: exampleMeals(
+                    session.attempt,
+                    judgement.points,
+                    judgement.maxPoints,
+                    samplePassingMeals(owned, (totals) => meetsLevel2(totals, mission)),
+                  ),
                   conditions: judgement.conditions,
                   totals: calculated.totals,
                 },
@@ -248,7 +262,12 @@ export function Play() {
               {
                 headline: judgement.headline,
                 detail: judgement.detail,
-                answerNames: [],
+                answerNames: exampleMeals(
+                  session.attempt,
+                  judgement.points,
+                  judgement.maxPoints,
+                  samplePassingMeals(owned, (totals) => meetsLevel3(totals, mission)),
+                ),
                 conditions: judgement.conditions,
                 totals: calculated.totals,
               },
@@ -269,7 +288,9 @@ export function Play() {
   function confirm() {
     setSession((currentSession) => {
       if (!currentSession) return currentSession;
-      if (currentSession.phase === "preview") return { ...currentSession, phase: "answer" };
+      if (currentSession.phase === "preview") {
+        return { ...currentSession, phase: "study", studyToken: Date.now() };
+      }
       if (currentSession.phase === "roundResult") return confirmRound(currentSession);
       if (currentSession.phase === "sessionResult") return beginMove(currentSession);
       return currentSession;

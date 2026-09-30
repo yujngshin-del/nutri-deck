@@ -43,10 +43,9 @@ export function MealTray({
                 {name.detail ? (
                   <p className="truncate text-[11px] font-bold text-[#157a3e]">{name.detail}</p>
                 ) : null}
-                <p className="text-[11px] text-neutral-400">
-                  {food.food_code}
-                  {showEnergy ? ` · ${formatNutrient("energy_kcal", food.energy_kcal)}` : ""}
-                </p>
+                {showEnergy ? (
+                  <p className="text-[11px] text-neutral-400">{formatNutrient("energy_kcal", food.energy_kcal)}</p>
+                ) : null}
               </div>
               <button
                 type="button"

@@ -4,8 +4,6 @@ import { level1Round } from "../data/missions";
 /** 한 끼를 구성하는 자리. 영양 점수가 아니다. */
 export type MealRole = "밥" | "국" | "반찬" | "주찬";
 
-export const MEAL_ROLES: MealRole[] = ["밥", "국", "반찬", "주찬"];
-
 /** 국가표준식품성분 분류를 밥·국·반찬·주찬으로 붙인다. */
 export function mealRole(food: Food): MealRole {
   if (food.category === "밥류") return "밥";
@@ -15,15 +13,24 @@ export function mealRole(food: Food): MealRole {
   return "주찬";
 }
 
-export function mealRolesIn(foods: Food[]): MealRole[] {
-  return MEAL_ROLES.filter((role) => foods.some((food) => mealRole(food) === role));
+/** 고르는 자리. 반찬과 주찬은 같은 찬 자리다. */
+export type MealSlot = "밥" | "국" | "찬";
+
+export function mealSlot(food: Food): MealSlot {
+  const role = mealRole(food);
+  return role === "밥" || role === "국" ? role : "찬";
 }
 
+/** 밥·국은 하나씩, 반찬과 주찬은 둘 중 하나만 있으면 한 끼다. */
 export function selectionCoversMeal(foods: Food[], selected: string[]): boolean {
   const chosen = new Set(selected);
-  return mealRolesIn(foods).every((role) =>
-    foods.some((food) => mealRole(food) === role && chosen.has(food.food_code)),
-  );
+  const slots: MealSlot[] = ["밥", "국", "찬"];
+  return slots.every((slot) => {
+    const available = foods.some((food) => mealSlot(food) === slot);
+    if (!available) return true;
+    const picked = foods.filter((food) => mealSlot(food) === slot && chosen.has(food.food_code));
+    return picked.length === 1;
+  });
 }
 
 /**

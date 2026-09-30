@@ -19,8 +19,15 @@ export const MAX_ATTEMPTS = 3;
 export const TRACK_SPACES = 18;
 /** Landing index of GOAL. Movement still stops here and never passes it. */
 export const GOAL_POSITION = TRACK_SPACES + 1;
-export const LEVEL1_ROUND_POINTS = 1;
+/** 밥·찬·국 3장 비교 정답. */
+export const LEVEL1_GROUP_POINTS = 1;
+/** 9장 전체 비교 정답. */
+export const LEVEL1_ALL_POINTS = 2;
 export const LEVEL2_CLEAR_POINTS = 2;
+
+export function level1RoundPoints(group: CardGroup): number {
+  return group === "전체" ? LEVEL1_ALL_POINTS : LEVEL1_GROUP_POINTS;
+}
 
 /**
  * LEVEL 1은 여섯 판이다.
@@ -79,8 +86,8 @@ export const level1Rounds: Level1Round[] = [
 
 /**
  * 한 끼 조건의 허용 범위를 넓힌 값이다. 건강등급이 아니다.
- * 열량 670kcal ±180. 탄수화물 50g 이상. 단백질 12g 이상.
- * 나트륨 1,500mg 이하. 지방 30g 이하. 당류 50g 이하.
+ * 열량 540~800kcal(670±130). 탄수화물 50g 이상. 단백질 18g 이상.
+ * 나트륨 1,500mg 이하. 지방 22g 이하. 당류 25g 이하.
  * 앞에 있는 4개가 첫 LEVEL 2다.
  */
 export const level2Missions: Level2Mission[] = [
@@ -89,19 +96,19 @@ export const level2Missions: Level2Mission[] = [
     level: 2,
     kind: "kcal",
     label: "열량",
-    prompt: "670kcal에 가깝게 한 끼를 구성하세요. 180kcal 이내면 성공입니다.",
+    prompt: "540~800kcal인 한 끼를 구성하세요.",
     targetKcal: 670,
-    successGap: 180,
+    successGap: 130,
   },
   {
     id: "protein-18",
     level: 2,
     kind: "threshold",
     label: "단백질",
-    prompt: "단백질 12g 이상인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상인 한 끼를 구성하세요.",
     nutrient: "protein_g",
     op: "gte",
-    value: 12,
+    value: 18,
     unit: "g",
   },
   {
@@ -131,10 +138,10 @@ export const level2Missions: Level2Mission[] = [
     level: 2,
     kind: "threshold",
     label: "지방",
-    prompt: "지방 30g 이하인 한 끼를 구성하세요.",
+    prompt: "지방 22g 이하인 한 끼를 구성하세요.",
     nutrient: "fat_g",
     op: "lte",
-    value: 30,
+    value: 22,
     unit: "g",
   },
   {
@@ -142,10 +149,10 @@ export const level2Missions: Level2Mission[] = [
     level: 2,
     kind: "threshold",
     label: "당류",
-    prompt: "당류 50g 이하인 한 끼를 구성하세요.",
+    prompt: "당류 25g 이하인 한 끼를 구성하세요.",
     nutrient: "sugar_g",
     op: "lte",
-    value: 50,
+    value: 25,
     unit: "g",
   },
 ];
@@ -155,27 +162,27 @@ export const level3Missions: Level3Mission[] = [
   {
     id: "protein18-carb83",
     level: 3,
-    prompt: "단백질 12g 이상, 탄수화물 50g 이상인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 탄수화물 50g 이상인 한 끼를 구성하세요.",
     conditions: [
-      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 12, unit: "g" },
+      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
       { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 50, unit: "g" },
     ],
   },
   {
     id: "protein18-sodium667",
     level: 3,
-    prompt: "단백질 12g 이상, 나트륨 1,500mg 이하인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 나트륨 1,500mg 이하인 한 끼를 구성하세요.",
     conditions: [
-      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 12, unit: "g" },
+      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
       { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 1500, unit: "mg" },
     ],
   },
   {
     id: "protein18-carb83-sodium667",
     level: 3,
-    prompt: "단백질 12g 이상, 탄수화물 50g 이상, 나트륨 1,500mg 이하인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 탄수화물 50g 이상, 나트륨 1,500mg 이하인 한 끼를 구성하세요.",
     conditions: [
-      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 12, unit: "g" },
+      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
       { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 50, unit: "g" },
       { id: "sodium", label: "나트륨", nutrient: "sodium_mg", op: "lte", value: 1500, unit: "mg" },
     ],
@@ -192,19 +199,19 @@ export const level3Missions: Level3Mission[] = [
   {
     id: "protein18-fat18",
     level: 3,
-    prompt: "단백질 12g 이상, 지방 30g 이하인 한 끼를 구성하세요.",
+    prompt: "단백질 18g 이상, 지방 22g 이하인 한 끼를 구성하세요.",
     conditions: [
-      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 12, unit: "g" },
-      { id: "fat", label: "지방", nutrient: "fat_g", op: "lte", value: 30, unit: "g" },
+      { id: "protein", label: "단백질", nutrient: "protein_g", op: "gte", value: 18, unit: "g" },
+      { id: "fat", label: "지방", nutrient: "fat_g", op: "lte", value: 22, unit: "g" },
     ],
   },
   {
     id: "carb83-sugar33",
     level: 3,
-    prompt: "탄수화물 50g 이상, 당류 50g 이하인 한 끼를 구성하세요.",
+    prompt: "탄수화물 50g 이상, 당류 25g 이하인 한 끼를 구성하세요.",
     conditions: [
       { id: "carb", label: "탄수화물", nutrient: "carbohydrate_g", op: "gte", value: 50, unit: "g" },
-      { id: "sugar", label: "당류", nutrient: "sugar_g", op: "lte", value: 50, unit: "g" },
+      { id: "sugar", label: "당류", nutrient: "sugar_g", op: "lte", value: 25, unit: "g" },
     ],
   },
 ];
@@ -251,6 +258,7 @@ export function missionForRound(round: number): Level1Mission {
     prompt: roundSpec.prompt,
     nutrient: roundSpec.key,
     direction: roundSpec.direction,
+    points: level1RoundPoints(roundSpec.group),
   };
 }
 

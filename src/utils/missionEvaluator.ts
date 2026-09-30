@@ -56,13 +56,18 @@ function evaluateLevel1(
     ? formatNutrient(mission.nutrient, selected[mission.nutrient])
     : "선택 없음";
 
+  const award = mission.points;
   return {
-    points: correct ? 1 : 0,
-    maxPoints: 1,
+    points: correct ? award : 0,
+    maxPoints: award,
     headline: correct ? "정답입니다!" : "오답입니다.",
     detail: correct
       ? `${selected?.food_name ?? ""}의 ${meta.label}은 ${actual}입니다.`
-      : "선택한 음식이 정답이 아닙니다.",
+      : answers.length > 0
+        ? `정답은 ${answers
+            .map((food) => `${food.food_name}(${meta.label} ${formatNutrient(mission.nutrient, food[mission.nutrient])})`)
+            .join(", ")}입니다.`
+        : "선택한 음식이 정답이 아닙니다.",
     conditions: [
       {
         id: mission.id,
@@ -75,6 +80,16 @@ function evaluateLevel1(
       },
     ],
   };
+}
+
+export function meetsLevel2(totals: NutritionTotals, mission: Level2Mission): boolean {
+  const result = evaluateLevel2(totals, mission);
+  return result.maxPoints > 0 && result.points >= result.maxPoints;
+}
+
+export function meetsLevel3(totals: NutritionTotals, mission: Level3Mission): boolean {
+  const result = evaluateLevel3(totals, mission);
+  return result.maxPoints > 0 && result.points >= result.maxPoints;
 }
 
 export function bestFoods(dealt: Food[], mission: Level1Mission): Food[] {
@@ -110,28 +125,22 @@ function evaluateLevel2(totals: NutritionTotals, mission: Level2Mission): Missio
     };
   }
 
-  const gap = totals.energy_kcal - mission.targetKcal;
-  const distance = Math.abs(gap);
-  const success = distance <= mission.successGap;
+  const low = mission.targetKcal - mission.successGap;
+  const high = mission.targetKcal + mission.successGap;
+  const range = `${low.toLocaleString("ko-KR")}~${high.toLocaleString("ko-KR")}kcal`;
+  const success = totals.energy_kcal >= low && totals.energy_kcal <= high;
 
   return {
     points: success ? 2 : 0,
     maxPoints: 2,
-    headline: success ? "성공!" : "목표와 차이가 있습니다.",
-    detail: `목표는 ${mission.targetKcal}kcal, 현재 식사는 ${totals.energy_kcal}kcal, 차이는 ${distance}kcal입니다.`,
+    headline: success ? "성공!" : "범위를 벗어났습니다.",
+    detail: `범위는 ${range}, 현재 식사는 ${totals.energy_kcal}kcal입니다.`,
     conditions: [
       {
-        id: "target-kcal",
-        label: "목표",
-        targetText: `${mission.targetKcal}kcal`,
+        id: "kcal-range",
+        label: "열량",
+        targetText: range,
         actualText: `${totals.energy_kcal}kcal`,
-        met: success,
-      },
-      {
-        id: "kcal-gap",
-        label: "차이",
-        targetText: `${mission.successGap}kcal 이내`,
-        actualText: `${distance}kcal`,
         met: success,
       },
     ],

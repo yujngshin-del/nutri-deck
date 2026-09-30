@@ -8,6 +8,7 @@ export function useCountdown(active: boolean, resetKey: number, seconds: number)
   if (seenKey !== resetKey) {
     setSeenKey(resetKey);
     setTimeLeft(seconds);
+    return seconds;
   }
 
   useEffect(() => {

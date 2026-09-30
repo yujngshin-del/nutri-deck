@@ -93,21 +93,23 @@ export function FoodCard({
         <p className="mt-1 inline-flex rounded-full bg-[#eef8f2] px-2 py-0.5 text-[11px] font-black text-[#157a3e]">
           {mealRole(food)}
         </p>
-        <p className="mt-0.5 text-xs font-medium text-neutral-400">{food.food_code}</p>
 
         {showNutrition ? (
-          <ul className="mt-2 space-y-2">
+          <ul className="mt-2 w-full space-y-2">
             {(highlightKeys.length > 0 ? highlightKeys : allKeys).map((key) => {
               const scale = barScale[key] || food[key] || 1;
               const width = Math.max(6, Math.round((food[key] / scale) * 100));
               return (
-                <li key={key}>
-                  <p className="text-[13px] font-extrabold text-brand">
-                    {NUTRIENT_META[key].label} {formatNutrient(key, food[key])}
-                  </p>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-neutral-100">
-                    <div className="h-full rounded-full bg-[#2fbe78]" style={{ width: `${width}%` }} />
+                <li key={key} className="flex items-center gap-1.5">
+                  <span className="w-[3.25rem] shrink-0 truncate text-[12px] font-bold text-neutral-900">
+                    {NUTRIENT_META[key].label}
+                  </span>
+                  <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-neutral-100">
+                    <div className="h-full rounded-full bg-[#3dcb73]" style={{ width: `${width}%` }} />
                   </div>
+                  <span className="w-[3.7rem] shrink-0 text-right text-[12px] font-bold tabular-nums text-neutral-900">
+                    {formatNutrient(key, food[key])}
+                  </span>
                 </li>
               );
             })}

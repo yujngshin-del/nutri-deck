@@ -16,7 +16,7 @@ import { stageTitle, type BoardSession } from "../game/boardRules";
 import { NUTRIENT_META } from "../types";
 import type { Food, NutrientKey } from "../types";
 import { formatNutrient } from "../utils/format";
-import { MEAL_ROLES, cardsForRound, mealRole, mealRolesIn, selectionCoversMeal } from "../utils/mealRole";
+import { cardsForRound, mealRole, selectionCoversMeal } from "../utils/mealRole";
 
 export function GameModal({
   session,
@@ -76,7 +76,7 @@ export function GameModal({
                 ROUND {session.round} / {session.stageMissionIds.length}
               </p>
               {session.stage !== "level1" && session.phase !== "roundResult" && (
-                <p className="mt-2 text-xs font-black text-neutral-500">
+                <p className="mt-2 text-lg font-black text-neutral-800">
                   기회 {session.attempt || 1} / {MAX_ATTEMPTS}
                 </p>
               )}
@@ -96,11 +96,11 @@ export function GameModal({
           {(session.phase === "study" || session.phase === "answer") && (
             <>
               {session.phase === "answer" && session.stage !== "level1" && (
-                <div className="mb-4">
+                <div className="mb-4 w-full max-w-sm">
                   <MealTray
                     foods={foods.filter((food) => selected.includes(food.food_code))}
                     onRemove={onToggle}
-                    emptyText="밥, 국, 반찬, 주찬에서 각각 하나씩 고르세요."
+                    emptyText="밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요."
                   />
                 </div>
               )}
@@ -129,7 +129,7 @@ export function GameModal({
           )}
           {session.phase === "answer" && session.stage !== "level1" && (
             <p className="mt-3 text-sm font-semibold text-neutral-500">
-              {mealRolesIn(foods).join(" · ")}에서 하나씩 고르세요. 기회 {session.attempt || 1}/{MAX_ATTEMPTS}
+              밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요. 기회 {session.attempt || 1}/{MAX_ATTEMPTS}
             </p>
           )}
           {session.phase === "preview" && (
@@ -142,13 +142,14 @@ export function GameModal({
                 확인
               </button>
               <p className="mt-3 text-sm font-semibold text-neutral-500">
-                확인을 누르면 문제가 시작됩니다. 카드 영양정보는 다시 보여 주지 않습니다.
+                확인을 누르면 카드 영양정보를 15초 동안 보여 줍니다.
               </p>
             </>
           )}
           {session.phase === "study" && (
             <p className="text-sm font-semibold text-neutral-500">
-              {seconds}초 후 영양정보가 사라집니다. 이 공개는 처음 한 번입니다.
+              {seconds}초 후 영양정보가 사라집니다.
+              {session.stage === "level1" ? " 이 공개는 처음 한 번입니다." : " 문제가 시작되면 수치는 다시 나오지 않습니다."}
             </p>
           )}
           {session.phase === "roundResult" && retry && (
@@ -191,7 +192,7 @@ function canRetry(session: BoardSession): boolean {
   return !session.roundLog.some((note) => note.round === session.round);
 }
 
-const level1StudyKeys: NutrientKey[] = ["carbohydrate_g", "protein_g", "sodium_mg"];
+const level1StudyKeys: NutrientKey[] = ["energy_kcal", "carbohydrate_g", "protein_g", "sodium_mg"];
 
 function visibleFoods(session: BoardSession, foods: Food[]): Food[] {
   if (session.phase === "study") return foods;
@@ -201,6 +202,7 @@ function visibleFoods(session: BoardSession, foods: Food[]): Food[] {
 
 function questionKeys(session: BoardSession): NutrientKey[] {
   if (session.phase === "study" && session.stage === "level1") return level1StudyKeys;
+  if (session.phase === "study" && session.reviewMissions) return reviewStudyKeys(session);
   if (session.stage === "level1") return [missionForRound(session.round).nutrient];
   const missionId = session.stageMissionIds[session.round - 1] ?? "";
   if (session.stage === "level2") {
@@ -232,18 +234,32 @@ function CardGroups({
   onToggle: (foodCode: string) => void;
 }) {
   const scale = barScale(foods, keys);
-  const groups = session.stage === "level1" ? [foods] : MEAL_ROLES.map((role) => foods.filter((food) => mealRole(food) === role));
-  const titles = session.stage === "level1" ? [level1Round(session.round).group] : MEAL_ROLES;
+  const sideDishes = foods
+    .filter((food) => {
+      const role = mealRole(food);
+      return role === "반찬" || role === "주찬";
+    })
+    .sort((left, right) => Number(mealRole(right) === "반찬") - Number(mealRole(left) === "반찬"));
+  const groups =
+    session.stage === "level1"
+      ? [{ title: null as string | null, foods }]
+      : [
+          { title: "밥", foods: foods.filter((food) => mealRole(food) === "밥") },
+          { title: "국", foods: foods.filter((food) => mealRole(food) === "국") },
+          { title: "반찬 · 주찬", foods: sideDishes },
+        ];
 
   return (
     <div className="space-y-6">
-      {groups.map((group, index) => {
-        if (group.length === 0) return null;
+      {groups.map((group) => {
+        if (group.foods.length === 0) return null;
         return (
-          <section key={titles[index]}>
-            <h3 className="mb-3 text-sm font-black tracking-wide text-neutral-500">{titles[index]}</h3>
+          <section key={group.title ?? "cards"}>
+            {group.title ? (
+              <h3 className="mb-3 text-sm font-black tracking-wide text-neutral-500">{group.title}</h3>
+            ) : null}
             <FoodCardGrid>
-              {group.map((food) => (
+              {group.foods.map((food) => (
                 <FoodCard
                   key={food.food_code}
                   food={food}
@@ -267,12 +283,22 @@ function reviewMissions(session: BoardSession) {
   return session.stageMissionIds.map((id) => level2MissionById(id));
 }
 
+/** 조건이 바뀐 뒤 다시 보여주는 영양소. 열량은 항상 포함한다. */
+function reviewStudyKeys(session: BoardSession): NutrientKey[] {
+  const keys: NutrientKey[] = ["energy_kcal"];
+  for (const mission of reviewMissions(session)) {
+    const key = mission.kind === "kcal" ? "energy_kcal" : mission.nutrient;
+    if (!keys.includes(key)) keys.push(key);
+  }
+  return keys;
+}
+
 function PreviewBody({ session }: { session: BoardSession }) {
   const missions = reviewMissions(session);
   return (
     <div className="mx-auto max-w-xl py-4">
       <p className="text-base font-semibold leading-7 text-neutral-600">
-        조건이 바뀌었습니다. 아래 문제를 읽은 뒤 확인을 누르세요. 카드 영양정보는 다시 보여 주지 않습니다.
+        조건이 바뀌었습니다. 아래 문제를 읽은 뒤 확인을 누르세요. 확인 후 이번 조건의 영양소와 열량을 15초 동안 보여 줍니다.
       </p>
       <ol className="mt-5 space-y-3">
         {missions.map((mission, index) => (
@@ -302,15 +328,11 @@ function StudyBody({
   return (
     <div className="mb-5 flex items-center justify-between gap-4">
       <div>
-        <p className="text-sm font-black text-brand">
-          {session.stage === "level1" ? "탄수화물 · 단백질 · 나트륨" : spec?.label ?? names}
-        </p>
+        <p className="text-sm font-black text-brand">{session.stage === "level1" ? names : spec?.label ?? names}</p>
         <p className="mt-1 text-base font-semibold text-neutral-600">
           {session.stage === "level1"
-            ? "탄수화물, 단백질, 나트륨만 카드 안에서 한 번 보여 줍니다. 문제가 시작되면 수치는 다시 나오지 않습니다."
-            : spec
-              ? spec.prompt
-              : `이번 문제의 ${names}만 카드 안에서 확인하세요.`}
+            ? "열량, 탄수화물, 단백질, 나트륨을 카드 안에서 한 번 보여 줍니다. 문제가 시작되면 수치는 다시 나오지 않습니다."
+            : "이번 조건의 영양소와 열량을 15초 동안 보여 줍니다. 문제가 시작되면 수치는 다시 나오지 않습니다."}
         </p>
       </div>
       <p className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-white text-3xl font-black text-brand shadow">
@@ -328,6 +350,7 @@ function QuestionBody({ session }: { session: BoardSession }) {
       <div className="mb-5">
         <p className="text-sm font-black text-brand">{spec.label}</p>
         <h3 className="mt-1 text-xl font-black sm:text-2xl">{mission.prompt}</h3>
+        <p className="mt-2 text-sm text-neutral-600">맞히면 {mission.points}점입니다.</p>
       </div>
     );
   }
@@ -337,13 +360,13 @@ function QuestionBody({ session }: { session: BoardSession }) {
     const mission = level2MissionById(missionId);
     const hint =
       mission.kind === "kcal"
-        ? `차이 ${mission.successGap}kcal 이내면 성공해서 2점, 그 외에는 0점입니다.`
+        ? "범위 안이면 성공해서 2점, 그 외에는 0점입니다."
         : "조건을 만족하면 2점, 아니면 0점입니다.";
     return (
       <div className="mb-5">
         <h3 className="text-xl font-black sm:text-2xl">{mission.prompt}</h3>
         <p className="mt-2 text-sm text-neutral-600">
-          밥, 국, 반찬, 주찬을 하나씩 고르세요. {hint} 기회는 {MAX_ATTEMPTS}번이고, 가장 높은 점수를 씁니다.
+          밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요. {hint} 기회는 {MAX_ATTEMPTS}번이고, 가장 높은 점수를 씁니다.
         </p>
       </div>
     );
@@ -362,7 +385,7 @@ function QuestionBody({ session }: { session: BoardSession }) {
         ))}
       </ul>
       <p className="mt-2 text-sm text-neutral-600">
-        밥, 국, 반찬, 주찬을 하나씩 고르세요. 조건마다 1점이고, 기회는 {MAX_ATTEMPTS}번입니다.
+        밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요. 조건마다 1점이고, 기회는 {MAX_ATTEMPTS}번입니다.
       </p>
     </div>
   );
@@ -390,12 +413,20 @@ function RoundResult({ session }: { session: BoardSession }) {
               ? "성공!"
               : "아쉽습니다."}
       </p>
-      {session.stage !== "level1" && feedback.answerNames.length > 0 && (
-        <p className="mt-4 text-lg font-bold">
-          {correct
-            ? `${feedback.answerNames.join(", ")}입니다.`
-            : `정답은 ${feedback.answerNames.join(", ")}입니다.`}
-        </p>
+      {session.stage === "level1" && !correct && (
+        <p className="mt-4 text-lg font-bold leading-8">{feedback.detail}</p>
+      )}
+      {meal && !retry && feedback.answerNames.length > 0 && (
+        <div className="mt-5 text-left">
+          <p className="text-sm font-black text-neutral-700">조건을 맞추는 한 끼 예시</p>
+          <ol className="mt-2 space-y-2">
+            {feedback.answerNames.map((name, index) => (
+              <li key={`${index}-${name}`} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold shadow-sm">
+                {index + 1}. {name}
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
       {session.stage !== "level1" && (
         <p className="mt-3 text-sm leading-6 text-neutral-600">{feedback.detail}</p>
