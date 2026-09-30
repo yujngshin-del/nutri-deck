@@ -338,9 +338,9 @@ export function moveSentence(steps: number, reachedGoal: boolean): string {
 }
 
 export function stageTitle(stage: StageId): string {
-  if (stage === "level1") return "영양소 비교 게임";
-  if (stage === "level2") return "한 끼 구성 게임";
-  return "영양조건 맞추기";
+  if (stage === "level1") return "영양정보를 탐색하라!";
+  if (stage === "level2") return "한 끼 미션을 수행하라!";
+  return "영양 밸런스 챌린지에 참여하라!";
 }
 
 export function isBoardSession(value: unknown): value is BoardSession {
