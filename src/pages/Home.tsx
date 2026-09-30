@@ -23,7 +23,9 @@ export function Home() {
       <div className="relative z-10 flex min-h-screen flex-col">
         <Header />
         <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center px-4 pb-12 pt-14 md:pt-20">
-          <h1 className="text-center text-5xl font-black tracking-tight md:text-7xl">Nutri-Deck</h1>
+          <h1>
+            <img src="/wordmark.png" alt="밥상탐험대" className="mx-auto h-auto w-[min(88vw,560px)]" />
+          </h1>
           <p className="mt-4 max-w-xl text-center text-lg font-semibold leading-8 text-neutral-800 md:text-2xl">
             음식 카드를 기억하고
             <br />

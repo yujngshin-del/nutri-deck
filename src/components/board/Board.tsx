@@ -30,7 +30,7 @@ export function Board({
   return (
     <section
             className="board-shell relative mx-auto w-[min(100%,820px,calc((100svh-430px)*10/7))]"
-      aria-label="Nutri-Deck 보드"
+      aria-label="밥상탐험대 보드"
     >
       <div className="board-shadow pointer-events-none absolute -inset-x-6 bottom-1 h-8 rounded-[50%]" aria-hidden />
       <div className="board-wood relative rounded-[32px] p-5 sm:p-6">

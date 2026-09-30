@@ -17,7 +17,7 @@ export function About() {
     <SimplePage title="게임 소개">
       <h1 className="text-3xl font-black">게임 소개</h1>
       <p className="mt-3 text-base leading-7 text-neutral-600">
-        Nutri-Deck은 완성된 음식 메뉴의 영양정보를 잠깐 학습한 뒤, 그 기억을 이용해 문제를
+        밥상탐험대는 완성된 음식 메뉴의 영양정보를 잠깐 학습한 뒤, 그 기억을 이용해 문제를
         풀고 보드 위의 말을 이동시키는 영양 학습 게임입니다.
       </p>
       <ol className="mt-8 space-y-3">

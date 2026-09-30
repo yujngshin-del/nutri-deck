@@ -2,8 +2,8 @@ import type { MatchRecord } from "../types";
 import type { BoardSession } from "../game/boardRules";
 import { isBoardSession } from "../game/boardRules";
 
-const MATCH_KEY = "nutri-deck-matches";
-const SESSION_KEY = "nutri-deck-board-session";
+const MATCH_KEY = "밥상탐험대-matches";
+const SESSION_KEY = "밥상탐험대-board-session";
 
 export function loadMatches(): MatchRecord[] {
   try {

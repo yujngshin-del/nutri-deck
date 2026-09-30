@@ -6,10 +6,7 @@ import { cx } from "../utils/format";
 
 const links = [
   { to: "/", label: "홈", end: true },
-  { to: "/about", label: "게임 소개", end: false },
-  { to: "/learn", label: "학습 자료", end: false },
-  { to: "/ranking", label: "랭킹", end: false },
-  { to: "/me", label: "마이페이지", end: false },
+  { to: "/play", label: "메인 게임", end: false },
 ];
 
 export function Header() {
@@ -30,10 +27,10 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
         <Link to="/" className="flex items-center gap-2">
           <Logo />
-          <img src="/wordmark.png" alt="밥상탐험대" className="h-9 w-auto" />
+          <img src="/wordmark.png" alt="밥상탐험대" className="h-9 w-auto -translate-y-1" />
         </Link>
 
-        <nav className="ml-6 hidden items-center gap-7 text-[15px] md:flex">
+        <nav className="ml-6 hidden items-center gap-7 text-[15px] leading-none md:flex">
           {links.map((link) => (
             <NavLink
               key={link.to}

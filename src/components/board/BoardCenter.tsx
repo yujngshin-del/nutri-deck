@@ -44,7 +44,10 @@ export function BoardCenter() {
             <MiniIcon kind="plate" />
             <MiniIcon kind="apple" />
           </div>
-          <p className="text-[11px] font-black tracking-[0.16em] text-[#1f9d55]">NUTRI-DECK</p>
+          <p className="text-[13px] font-black">
+            <span className="text-[#5D2E12]">밥상</span>
+            <span className="text-[#1f9d55]">탐험대</span>
+          </p>
           <p className="mt-1 text-[11px] font-black leading-4 text-[#3f342c]">
             <span className="block">배운 영양정보로</span>
             <span className="block whitespace-nowrap">먼저 GOAL에 도착하세요!</span>
