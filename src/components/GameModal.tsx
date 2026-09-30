@@ -8,6 +8,8 @@ import {
   MAX_ATTEMPTS,
   TRACK_SPACES,
   level1Round,
+  level1RoundPoints,
+  level1Rounds,
   level2MissionById,
   level3MissionById,
   missionForRound,
@@ -294,6 +296,27 @@ function reviewStudyKeys(session: BoardSession): NutrientKey[] {
 }
 
 function PreviewBody({ session }: { session: BoardSession }) {
+  if (session.stage === "level1") {
+    return (
+      <div className="mx-auto max-w-xl py-4">
+        <p className="text-base font-semibold leading-7 text-neutral-600">
+          아래 문제를 읽은 뒤 확인을 누르세요. 확인 후 열량, 탄수화물, 단백질, 나트륨을 15초 동안 보여 줍니다.
+        </p>
+        <ol className="mt-5 space-y-3">
+          {level1Rounds.map((round, index) => (
+            <li key={round.id} className="rounded-2xl bg-white px-5 py-4 shadow-sm">
+              <p className="text-xs font-black tracking-wide text-brand">
+                {index + 1}. {round.label}
+              </p>
+              <p className="mt-1 text-lg font-black">{round.prompt}</p>
+              <p className="mt-1 text-sm font-semibold text-neutral-500">맞히면 {level1RoundPoints(round.group)}점입니다.</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+
   const missions = reviewMissions(session);
   return (
     <div className="mx-auto max-w-xl py-4">

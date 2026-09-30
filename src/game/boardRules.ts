@@ -141,8 +141,8 @@ export function openTurn(session: BoardSession): BoardSession {
     bestPoints: 0,
     roundLabel: "",
     feedback: null,
-    phase: session.stage === "level1" ? "study" : session.reviewMissions ? "preview" : "answer",
-    studyToken: session.stage === "level1" ? Date.now() : 0,
+    phase: session.stage === "level1" || session.reviewMissions ? "preview" : "answer",
+    studyToken: 0,
   };
 }
 
