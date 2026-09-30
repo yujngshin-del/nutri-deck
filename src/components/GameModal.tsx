@@ -102,7 +102,7 @@ export function GameModal({
                   <MealTray
                     foods={foods.filter((food) => selected.includes(food.food_code))}
                     onRemove={onToggle}
-                    emptyText="밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요."
+                    emptyText="밥과 국을 하나씩 고르고, 반찬을 하나 고르세요."
                   />
                 </div>
               )}
@@ -131,7 +131,7 @@ export function GameModal({
           )}
           {session.phase === "answer" && session.stage !== "level1" && (
             <p className="mt-3 text-sm font-semibold text-neutral-500">
-              밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요. 기회 {session.attempt || 1}/{MAX_ATTEMPTS}
+              밥과 국을 하나씩 고르고, 반찬을 하나 고르세요. 기회 {session.attempt || 1}/{MAX_ATTEMPTS}
             </p>
           )}
           {session.phase === "preview" && (
@@ -236,19 +236,14 @@ function CardGroups({
   onToggle: (foodCode: string) => void;
 }) {
   const scale = barScale(foods, keys);
-  const sideDishes = foods
-    .filter((food) => {
-      const role = mealRole(food);
-      return role === "반찬" || role === "주찬";
-    })
-    .sort((left, right) => Number(mealRole(right) === "반찬") - Number(mealRole(left) === "반찬"));
+  const sideDishes = foods.filter((food) => mealRole(food) === "반찬");
   const groups =
     session.stage === "level1"
       ? [{ title: null as string | null, foods }]
       : [
           { title: "밥", foods: foods.filter((food) => mealRole(food) === "밥") },
           { title: "국", foods: foods.filter((food) => mealRole(food) === "국") },
-          { title: "반찬 · 주찬", foods: sideDishes },
+          { title: "반찬", foods: sideDishes },
         ];
 
   return (
@@ -389,7 +384,7 @@ function QuestionBody({ session }: { session: BoardSession }) {
       <div className="mb-5">
         <h3 className="text-xl font-black sm:text-2xl">{mission.prompt}</h3>
         <p className="mt-2 text-sm text-neutral-600">
-          밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요. {hint} 기회는 {MAX_ATTEMPTS}번이고, 가장 높은 점수를 씁니다.
+          밥과 국을 하나씩 고르고, 반찬을 하나 고르세요. {hint} 기회는 {MAX_ATTEMPTS}번이고, 가장 높은 점수를 씁니다.
         </p>
       </div>
     );
@@ -408,7 +403,7 @@ function QuestionBody({ session }: { session: BoardSession }) {
         ))}
       </ul>
       <p className="mt-2 text-sm text-neutral-600">
-        밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 고르세요. 조건마다 1점이고, 기회는 {MAX_ATTEMPTS}번입니다.
+        밥과 국을 하나씩 고르고, 반찬을 하나 고르세요. 조건마다 1점이고, 기회는 {MAX_ATTEMPTS}번입니다.
       </p>
     </div>
   );

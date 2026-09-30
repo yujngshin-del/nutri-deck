@@ -2,13 +2,13 @@ import type { Food, NutritionTotals } from "../types";
 import { mealSlot, type MealSlot } from "./mealRole";
 import { calculateNutrition } from "./nutritionCalculator";
 
-/** 밥·국을 하나씩, 반찬이나 주찬 중 하나를 골랐을 때 통과하는 한 끼를 최대 limit개 찾는다. */
+/** 밥·국·반찬을 하나씩 골랐을 때 통과하는 한 끼를 최대 limit개 찾는다. */
 export function samplePassingMeals(
   foods: Food[],
   passes: (totals: NutritionTotals) => boolean,
   limit = 2,
 ): Food[][] {
-  const slots: MealSlot[] = ["밥", "국", "찬"];
+  const slots: MealSlot[] = ["밥", "국", "반찬"];
   const buckets = slots
     .map((slot) => foods.filter((food) => mealSlot(food) === slot))
     .filter((bucket) => bucket.length > 0);

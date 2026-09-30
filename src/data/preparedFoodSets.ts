@@ -58,7 +58,7 @@ export const deckRoleCodes = {
 
 /**
  * 플레이어 한 명의 9장. 레벨이 바뀌어도 같은 카드를 쓴다.
- * 각 세트는 밥 3장, 국 3장, 찬 3장이다. 국은 국가표준식품성분DB 메뉴를 더 가져와 채웠다.
+ * 각 세트는 밥 3장, 국 3장, 반찬 3장이다. 국은 국가표준식품성분DB 메뉴를 더 가져와 채웠다.
  */
 export const preparedFoodSetCodes = [
   [

@@ -26,8 +26,8 @@ export function Learn() {
         ))}
       </div>
       <p className="mt-6 text-sm leading-6 text-neutral-500">
-        LEVEL 1은 밥·찬·국 3장 비교는 맞히면 1점, 전체 9장 비교는 맞히면 2점입니다.
-        LEVEL 2와 LEVEL 3은 밥과 국을 하나씩 고르고, 반찬이나 주찬 중 하나를 골라 한 끼를 만듭니다. 기회는 3번입니다.
+        LEVEL 1은 밥·반찬·국 3장 비교는 맞히면 1점, 전체 9장 비교는 맞히면 2점입니다.
+        LEVEL 2와 LEVEL 3은 밥, 국, 반찬을 하나씩 골라 한 끼를 만듭니다. 기회는 3번입니다.
         LEVEL 2는 성공하면 2점, LEVEL 3은 조건마다 1점입니다.
       </p>
     </SimplePage>

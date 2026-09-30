@@ -1,7 +1,7 @@
 import type { Level1Mission, Level2Mission, Level3Mission, NutrientKey } from "../types";
 
-/** LEVEL 1 한 판에서 비교하는 카드 묶음. 찬은 반찬과 주찬이다. */
-export type CardGroup = "밥" | "찬" | "국" | "전체";
+/** LEVEL 1 한 판에서 비교하는 카드 묶음. */
+export type CardGroup = "밥" | "반찬" | "국" | "전체";
 
 export interface Level1Round {
   id: string;
@@ -19,7 +19,7 @@ export const MAX_ATTEMPTS = 3;
 export const TRACK_SPACES = 18;
 /** Landing index of GOAL. Movement still stops here and never passes it. */
 export const GOAL_POSITION = TRACK_SPACES + 1;
-/** 밥·찬·국 3장 비교 정답. */
+/** 밥·반찬·국 3장 비교 정답. */
 export const LEVEL1_GROUP_POINTS = 1;
 /** 9장 전체 비교 정답. */
 export const LEVEL1_ALL_POINTS = 2;
@@ -31,7 +31,7 @@ export function level1RoundPoints(group: CardGroup): number {
 
 /**
  * LEVEL 1은 여섯 판이다.
- * 밥 3장·탄수화물, 찬 3장·단백질, 국 3장·나트륨, 이어서 9장 전체로 같은 세 영양소를 비교한다.
+ * 밥 3장·탄수화물, 반찬 3장·단백질, 국 3장·나트륨, 이어서 9장 전체로 같은 세 영양소를 비교한다.
  */
 export const level1Rounds: Level1Round[] = [
   {
@@ -44,11 +44,11 @@ export const level1Rounds: Level1Round[] = [
   },
   {
     id: "side-protein",
-    group: "찬",
+    group: "반찬",
     key: "protein_g",
-    label: "찬 · 단백질",
+    label: "반찬 · 단백질",
     direction: "highest",
-    prompt: "찬 카드 중 단백질 함량이 가장 높은 음식은 무엇일까요?",
+    prompt: "반찬 카드 중 단백질 함량이 가장 높은 음식은 무엇일까요?",
   },
   {
     id: "soup-sodium",
